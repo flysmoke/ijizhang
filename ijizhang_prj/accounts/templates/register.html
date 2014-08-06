@@ -1,0 +1,29 @@
+{% include "header.html" %}
+<h2> 注册成为我们的一员吧 </h2>
+<form action="" method="post" class="form-inline"  role="form">
+{% csrf_token %}
+    {% for field in form %}
+
+        {% if field.field.widget.attrs.checkbox %}
+            <div class="checkbox">
+            {{ field.errors }}
+            
+            {{ field }}{{ field.label }} 
+            </div>
+
+        {% else %}
+            <div class="form-group">
+            {{ field.errors }}
+            {{ field.label_tag }} 
+            {{ field }}
+            </div>
+        {% endif %}
+
+    {% endfor %}
+    
+    <button type="submit" class="btn btn-primary">注册</button>
+    <button type='button' class="btn btn-primary" onclick='javascrtpt:window.location.href="{% url 'accounts:login' %}"'>登录</button>
+    </form>
+</div>     
+</body>
+</html>

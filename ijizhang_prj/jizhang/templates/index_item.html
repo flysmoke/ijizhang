@@ -1,0 +1,60 @@
+
+{% include "header.html" %}
+{% include "welcome.html" %}
+
+<button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:new_item' %}"'><span class="glyphicon glyphicon-plus"></span> 新建帐单</button>
+<button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:export_to_item_csv' %}"'><span class="glyphicon glyphicon-floppy-save"></span> 导出为csv</button>
+<button type="submit" name="delete_button" class="btn btn-danger "><span class="glyphicon glyphicon-trash"></span> 删除所选</button>
+<h5>删除前请确认，删除操作不可恢复！</h5>
+
+<form method="post" action="">
+{% csrf_token %}
+
+<table class="table table-striped">
+
+<tr class="info"><td><strong>时间</strong></td>
+    <td><strong>价格(元)</strong></td>
+    <td><strong>分类</strong></td>
+    <td><strong>备注</strong></td>
+    <td><strong>删除?</strong></td>
+</tr>
+
+{% if item_list %}
+	{% for item in item_list %}
+	<tr class="{% cycle ,info %}">
+		<td><a href="{% url 'jizhang:edit_item' item.id %}">{{ item.pub_date|date:"Y-m-d"}}</a></td>
+		<td><a href="{% url 'jizhang:edit_item' item.id %}">{{ item.price}}</a></td>
+		<td> {{ item.category}} </td>
+		<td> {{ item.comment}} </td>
+		<td><input type='checkbox' name="del_id" value="{{item.id}}"></td>
+	</tr>
+	{% endfor %}
+{% else %}
+	<p>没有可用的帐单</p>
+{% endif %}
+
+
+</table>
+    <h5>
+    <span class="step-links">
+        {% if item_list.has_previous %}
+            <a href="?page={{ item_list.previous_page_number }}">上一页</a>
+        {% endif %}
+        {% if item_list.number %}
+            <span class="current">
+            第 {{ item_list.number }} 页，共 {{ item_list.paginator.num_pages }} 页
+            </span>
+        {% endif %}
+        {% if item_list.has_next %}
+            <a href="?page={{ item_list.next_page_number }}">下一页</a>
+        {% endif %}
+    </span>
+    </h5>
+
+</form>
+
+
+
+{% include "footer.html" %}
+
+

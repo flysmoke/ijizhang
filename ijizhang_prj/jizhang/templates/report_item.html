@@ -1,0 +1,30 @@
+{% include "header.html" %}
+{% include "welcome.html" %}
+
+
+<table class="table table-striped">
+
+
+	<tr>
+
+		<td>7月总计</td>
+		<td>8月总计</td>
+		<td>分类名</td>
+	</tr>
+{% if category_list %}
+	{% for category in category_list %}
+	<tr>
+		{% for item in category %}
+		<td>{{ item}}</td>
+		{% endfor %}
+	</tr>
+	{% endfor %}
+{% else %}
+	<p>No categorys are available.</p>
+{% endif %}
+
+<p></p>
+</table>
+
+{% include "footer.html" %}
+
