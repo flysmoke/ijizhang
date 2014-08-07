@@ -59,7 +59,26 @@ def index_category(request):
 	context = {'category_list': category_list,'username':request.user.username}
 	return render_to_response('index_category.html', RequestContext(request,context))	
 
-	
+# first login auto generate category
+@login_required
+def first_login(request):
+
+    if request.method == 'POST':
+        del_id = request.POST.getlist('del_id')
+        for category_id in del_id:
+            del_category = Category.objects.filter(id=category_id)
+            del_category.delete()
+        return HttpResponseRedirect("/jizhang/index_category")
+        
+    category_list = Category.objects.filter(user__username=request.user.username).order_by('p_category')
+    
+    if not category_list:
+        first_login_category(request.user.id)
+        category_list = Category.objects.filter(user__username=request.user.username).order_by('p_category')
+    
+    context = {'category_list': category_list,'username':request.user.username}
+    return render_to_response('index_category.html', RequestContext(request,context))	
+
 # new item view	
 @login_required	
 def new_item(request):
@@ -309,3 +328,70 @@ function sort_sum_account($row_category,$category_pid,&$row_start, $month_array,
   
   
  """
+	
+def first_login_category(userid):
+    new_category=Category(name=u'工作收入',isIncome=True,user_id=userid)
+    new_category.save()
+    pid = new_category.id
+    sub_category=Category(name=u'工资收入',isIncome=True,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'股票收入',isIncome=True,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'奖金收入',isIncome=True,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'其他收入',isIncome=True,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    
+    new_category=Category(name=u'餐饮',isIncome=False,user_id=userid)
+    new_category.save()
+    pid = new_category.id
+    sub_category=Category(name=u'早餐',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'午餐',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'晚餐',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'饮料水果',isIncome=False,user_id=userid,p_category_id=pid)    
+    sub_category.save()
+    sub_category=Category(name=u'零食',isIncome=False,user_id=userid,p_category_id=pid)     
+    sub_category.save()
+    
+    new_category=Category(name=u'交通',isIncome=False,user_id=userid)
+    new_category.save()
+    pid = new_category.id
+    sub_category=Category(name=u'公交地铁',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'加油',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'停车过路',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'汽车保养',isIncome=False,user_id=userid,p_category_id=pid)    
+    sub_category.save()
+    sub_category=Category(name=u'打的',isIncome=False,user_id=userid,p_category_id=pid)     
+    sub_category.save()
+    
+    new_category=Category(name=u'购物',isIncome=False,user_id=userid)
+    new_category.save()
+    pid = new_category.id
+    sub_category=Category(name=u'生活用品',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'衣裤鞋帽',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'化妆品',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'首饰手表',isIncome=False,user_id=userid,p_category_id=pid)    
+    sub_category.save()
+    sub_category=Category(name=u'宝宝用品',isIncome=False,user_id=userid,p_category_id=pid)     
+    sub_category.save()    
+    sub_category=Category(name=u'书籍报刊',isIncome=False,user_id=userid,p_category_id=pid)     
+    sub_category.save() 
+    
+    new_category=Category(name=u'医疗',isIncome=False,user_id=userid)
+    new_category.save()
+    pid = new_category.id
+    sub_category=Category(name=u'看病门诊',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'药店买药',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()
+    sub_category=Category(name=u'保健品',isIncome=False,user_id=userid,p_category_id=pid)
+    sub_category.save()

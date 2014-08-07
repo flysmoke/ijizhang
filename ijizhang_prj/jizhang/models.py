@@ -6,12 +6,16 @@ from django.utils.translation import ugettext_lazy as _
 # Create your models here.
 
 class Category(models.Model):
-	p_category = models.ForeignKey('self', null = True, blank = True, verbose_name=_(u"父类名称"))
-	name = models.CharField(max_length=20, verbose_name=_(u"类别名称"))
-	isIncome = models.BooleanField(verbose_name='是否收入')
-	user = models.ForeignKey(User,verbose_name='所属用户')
-	def __unicode__(self):
-		return self.name
+    INCOME_CHOICES = (
+        (True, _(u'收入')),
+        (False, _(u'支出') ),
+    )
+    p_category = models.ForeignKey('self', null = True, blank = True, verbose_name=_(u"父类名称"))
+    name = models.CharField(max_length=20, verbose_name=_(u"类别名称"))
+    isIncome = models.BooleanField(choices=INCOME_CHOICES, verbose_name='是否收入')
+    user = models.ForeignKey(User,verbose_name='所属用户')
+    def __unicode__(self):
+        return self.name
 	
 class Item(models.Model):
 	price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='金额')

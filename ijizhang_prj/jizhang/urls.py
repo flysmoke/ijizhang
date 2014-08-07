@@ -9,6 +9,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
 	url(r'^$', views.index_item, name='index_item'),
+	url(r'^first_login/', views.first_login, name='first_login'),
 	url(r'^index_item/', views.index_item, name='index_item'),
 	url(r'^index_category', views.index_category, name='index_category'),
 	url(r'^item/(?P<pk>\d+)/$', views.edit_item, name='edit_item'),

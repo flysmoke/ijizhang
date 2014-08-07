@@ -1,38 +1,57 @@
 
 {% include "header.html" %}
 {% include "welcome.html" %}
+        <div>
+            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:new_category' %}"'><span class="glyphicon glyphicon-plus"></span> 新建分类</button>
+            <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
+            <span class="glyphicon glyphicon-trash"></span> 删除所选
+            </button>
+        </div>
+        <form method="post" action="">
+            {% csrf_token %}
 
-<button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:new_category' %}"'><span class="glyphicon glyphicon-plus"></span> 新建分类</button>
-<button type="submit" class="btn btn-danger "><span class="glyphicon glyphicon-trash"></span> 删除分类</button>
-<h5>删除操作不可恢复，如果您删除了某个分类，该分类下的帐目将全部删除！</h5>
 
-<form method="post" action="">
-{% csrf_token %}
+            <table class="table table-striped">
 
-<table class="table table-striped">
+                <tr class="info"><td><strong>分类名称</strong></td>
+                    <td><strong>父类名称</strong></td>
+                    <td><strong>收入/支出</strong></td>
+                    <td><strong><input type="checkbox" id="all" />全选删除?</strong></td>
+                </tr>
 
-<tr class="info"><td><strong>分类名称</strong></td>
-    <td><strong>父类名称</strong></td>
-    <td><strong>是否收入</strong></td>
-    <td><strong>删除分类?</strong></td>
-</tr>
+                {% if category_list %}
+                    {% for category in category_list %}
+                    <tr class="{% cycle ,info %}">
+                        <td><a href="{% url 'jizhang:edit_category' category.id %}">{{ category.name}}</a></td>
+                        <td><a href="{% url 'jizhang:edit_category' category.id %}">{{ category.p_category}}</a></td>
+                        <td> {{ category.get_isIncome_display}} </td>
+                        <td><input type='checkbox' name="del_id" value="{{category.id}}"></td>
 
-{% if category_list %}
-	{% for category in category_list %}
-	<tr class="{% cycle ,info %}">
-		<td><a href="{% url 'jizhang:edit_category' category.id %}">{{ category.name}}</a></td>
-		<td><a href="{% url 'jizhang:edit_category' category.id %}">{{ category.p_category}}</a></td>
-		<td> {{ category.isIncome}} </td>
-		<td><input type='checkbox' name="del_id" value="{{category.id}}"></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <p>没有可用的分类</p>
+                {% endif %}
 
-	</tr>
-	{% endfor %}
-{% else %}
-	<p>没有可用的分类</p>
-{% endif %}
-
-</table>
-
-</form>
+            </table>
+            <!-- Modal -->
+            <div class="modal fade" backdrop="static" id="myModal" tabindex="-1"  role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>      
+                    <h4 class="modal-title" id="myModalLabel">确认删除?</h4>
+                  </div>
+                  <div class="modal-body">
+                    <h6>删除前请确认，删除操作不可恢复！</h6>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">删除</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </form>
 
 {% include "footer.html" %}
