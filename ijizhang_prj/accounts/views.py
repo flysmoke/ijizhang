@@ -25,7 +25,7 @@ def register(request):
             user=User.objects.create_user(username,email,password)
             user.save()
             _login(request,username,password)#注册完毕 直接登陆
-            return HttpResponseRedirect("/")    
+            return HttpResponseRedirect("/jizhang/first_login")    
     template_var["form"]=form        
     return render_to_response("register.html",template_var,context_instance=RequestContext(request))
 
