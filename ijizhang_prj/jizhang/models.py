@@ -18,7 +18,7 @@ class Category(models.Model):
         return self.name
 	
 class Item(models.Model):
-	price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='金额')
+	price = models.DecimalField(max_digits=13, decimal_places=2, verbose_name='金额')
 	comment = models.CharField(max_length=200, blank = True, verbose_name='注释')
 	pub_date = models.DateField(verbose_name='日期')
 	category = models.ForeignKey(Category,verbose_name='分类')	

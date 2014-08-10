@@ -15,10 +15,12 @@
 {% for field in form %}
 
     {% if field.field.widget.attrs.checkbox %}
+        
         <div class="checkbox">
         {{ field.errors }}
-        
+        <label>
         {{ field }}{{ field.label }} 
+        </label>
         </div>
 
     {% else %}

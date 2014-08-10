@@ -49,6 +49,7 @@ class ItemForm(ModelForm):
         self.fields['price'].widget = forms.NumberInput(attrs={'class':"form-control"})
         self.fields['comment'].widget = forms.TextInput(attrs={'class':"form-control"})
 
+
 		
 class CategoryForm(ModelForm):
 
