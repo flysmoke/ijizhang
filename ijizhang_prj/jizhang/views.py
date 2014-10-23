@@ -10,38 +10,58 @@ import datetime
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import csv
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.db import connection
 
 #myApp package
 from jizhang.models import Item, Category
-from jizhang.forms import ItemForm, CategoryForm, NewCategoryForm, FindItemForm
+from jizhang.forms import ItemForm, CategoryForm, NewCategoryForm, FindItemForm, UpLoadFileForm
 from jizhang.data_format_func import sort_category, check_parent_category
 
-	
+P_CATEGORY_NULL_NAME = '------'
+PAGE_ITEM_NUM = 10	
+    
+def split_page(request, data, page_item_num):
+    p = Paginator(data , page_item_num)
+    page = request.GET.get('page') # Get page
+    try:
+        item_page = p.page(page)
+    except PageNotAnInteger:
+        item_page = p.page(1)
+    except EmptyPage:
+        item_page = p.page(p.num_pages)       
+    return item_page  
+    
 # item list view
 @login_required
 def index_item(request):
-	if request.method == 'POST':
-		del_id = request.POST.getlist('del_id')
-		for item_id in del_id:
-			del_item = Item.objects.filter(id=item_id)
-			del_item.delete()
-	
-	item_list = Item.objects.filter(category__user__username=request.user.username).order_by('-pub_date')
-	#one page include 10 items
-	p = Paginator(item_list , 10)
-	page = request.GET.get('page') # Get page
-	try:
-		item_page = p.page(page)
-	except PageNotAnInteger:
-		item_page = p.page(1)
-	except EmptyPage:
-		item_page = p.page(p.num_pages)
-	
-	context = {'item_list': item_page,'username':request.user.username}
-	return render_to_response('index_item.html', context,context_instance=RequestContext(request))
 
+    if request.method == 'POST':
+        del_id = request.POST.getlist('del_id')
+        for item_id in del_id:
+            del_item = get_object_or_404(Item, id=item_id)
+            del_item.delete()
+   
+    item_list = Item.objects.filter(category__user__username=request.user.username).order_by('-pub_date')
+    item_page = split_page(request, item_list, PAGE_ITEM_NUM)
+
+    context = {'item_list': item_page,'username':request.user.username}
+    return render_to_response('jizhang/index_item.html', context,context_instance=RequestContext(request))
+
+@login_required
+def index_price_item(request):
+
+    if request.method == 'POST':
+        del_id = request.POST.getlist('del_id')
+        for item_id in del_id:
+            del_item = get_object_or_404(Item, id=item_id)
+            del_item.delete()
+   
+    item_list = Item.objects.filter(category__user__username=request.user.username).order_by('price')
+    item_page = split_page(request, item_list, PAGE_ITEM_NUM)
+
+    context = {'item_list': item_page,'username':request.user.username}
+    return render_to_response('jizhang/index_item.html', context,context_instance=RequestContext(request))
 
 	
 	
@@ -49,15 +69,15 @@ def index_item(request):
 @login_required
 def index_category(request):
 
-	if request.method == 'POST':
-		del_id = request.POST.getlist('del_id')
-		for category_id in del_id:
-			del_category = Category.objects.filter(id=category_id)
-			del_category.delete()
+    if request.method == 'POST':
+        del_id = request.POST.getlist('del_id')
+        for category_id in del_id:
+            del_category = get_object_or_404(Category, id=category_id)
+            del_category.delete()
 
-	category_list = Category.objects.filter(user__username=request.user.username).order_by('p_category')
-	context = {'category_list': category_list,'username':request.user.username}
-	return render_to_response('index_category.html', RequestContext(request,context))	
+    category_list = Category.objects.filter(user__username=request.user.username).order_by('p_category')
+    context = {'category_list': category_list,'username':request.user.username}
+    return render_to_response('jizhang/index_category.html', RequestContext(request,context))	
 
 # first login auto generate category
 @login_required
@@ -66,7 +86,7 @@ def first_login(request):
     if request.method == 'POST':
         del_id = request.POST.getlist('del_id')
         for category_id in del_id:
-            del_category = Category.objects.filter(id=category_id)
+            del_category = get_object_or_404(Category, id=category_id)
             del_category.delete()
         return HttpResponseRedirect("/jizhang/index_category")
         
@@ -77,92 +97,96 @@ def first_login(request):
         category_list = Category.objects.filter(user__username=request.user.username).order_by('p_category')
     
     context = {'category_list': category_list,'username':request.user.username}
-    return render_to_response('index_category.html', RequestContext(request,context))	
+    return render_to_response('jizhang/index_category.html', RequestContext(request,context))	
 
 # new item view	
 @login_required	
 def new_item(request):
-	if request.method == 'POST':
-		form = ItemForm(request,data=request.POST)
-		if form.is_valid():
-			new_item = form.save()
-			new_item.save()
-			return HttpResponseRedirect("/jizhang")
-	else:
-		form = ItemForm(request,initial={'pub_date':timezone.now().date()})
-	
-	context = {'form':form,'username':request.user.username}
-	return render_to_response('new_item.html',RequestContext(request,context))
+    if request.method == 'POST':
+        form = ItemForm(request,data=request.POST)
+
+        if form.is_valid():
+            new_item = form.save()
+            new_item.save()
+            return HttpResponseRedirect("/jizhang")
+    else:
+        form = ItemForm(request,initial={'pub_date':timezone.now().date()})
+
+    most_used_categorys = Category.objects.annotate(num_items=Count('item')).order_by('-num_items')[:6]
+    context = {'form':form,'username':request.user.username,'most_used_categorys':most_used_categorys}
+    return render_to_response('jizhang/new_item.html',RequestContext(request,context))
 
 	
 # new category view		
 @login_required	
 def new_category(request):
-	if request.method == 'POST':
-		form = NewCategoryForm(request,data=request.POST)
-		if form.is_valid():
-			new_category = form.save(request)
-			new_category.save()
-			return HttpResponseRedirect("/jizhang/index_category")
-	else:
-		form = NewCategoryForm(request)
-	context = {'form':form,'username':request.user.username}
-	return render_to_response('new_category.html',RequestContext(request,context))
+    if request.method == 'POST':
+        form = NewCategoryForm(request,data=request.POST)
+        if form.is_valid():
+            new_category = form.save(request)
+            new_category.save()
+            return HttpResponseRedirect("/jizhang/index_category")
+    else:
+        form = NewCategoryForm(request)
+    context = {'form':form,'username':request.user.username}
+    return render_to_response('jizhang/new_category.html',RequestContext(request,context))
 
 	
 @login_required	
 def edit_item(request,pk):
-	if request.method == 'POST':
-		form = ItemForm(request,data=request.POST)
-		if form.is_valid():
-			new_item = form.save()
-			new_item.id=pk
-			new_item.save()
-			return HttpResponseRedirect("/jizhang")
-	else:
-		item_list = Item.objects.filter(id=pk)
-		form = ItemForm(request,instance=item_list[0])
-	context = {'form':form,'username':request.user.username}
-	return render_to_response('new_item.html',RequestContext(request,context))
+    if request.method == 'POST':
+        form = ItemForm(request,data=request.POST)
+        if form.is_valid():
+            new_item = form.save()
+            new_item.id=pk
+            new_item.save()
+            return HttpResponseRedirect("/jizhang")
+    else:
+        item_list = get_object_or_404(Item, id=pk)
+        form = ItemForm(request,instance=item_list)
+
+    most_used_categorys = Category.objects.annotate(num_items=Count('item')).order_by('-num_items')[:6]
+    context = {'form':form,'username':request.user.username,'most_used_categorys':most_used_categorys}
+    return render_to_response('jizhang/new_item.html',RequestContext(request,context))
 
 	
 @login_required	
 def edit_category(request,pk):
-	out_errors = []
-	if request.method == 'POST':
-		form = CategoryForm(request,data=request.POST)
-		if form.is_valid():
-			if not form.cleaned_data['p_category']:
-				pid=0
-			else:
-				pid = form.cleaned_data['p_category'].id
-			
-			if check_parent_category(int(pk),pid,form.fields['p_category'].choices):
-				new_category = form.save(request)
-				new_category.id=int(pk)
-				new_category.save()
-				return HttpResponseRedirect("/jizhang/index_category")
-			else:
-				out_errors = "父类别不能和子类别重复!"
-	else:
-		category_list = Category.objects.filter(id=pk)
-		form = CategoryForm(request,instance=category_list[0])
-	context = {'form':form,'username':request.user.username,'out_errors':out_errors}
-	return render_to_response('new_category.html',RequestContext(request,context))
+    out_errors = []
+    if request.method == 'POST':
+        form = CategoryForm(request,data=request.POST)
+        if form.is_valid():
+            if not form.cleaned_data['p_category']:
+                pid=0
+            else:
+                pid = form.cleaned_data['p_category'].id
+            
+            if check_parent_category(int(pk),pid,form.fields['p_category'].choices):
+                new_category = form.save(request)
+                new_category.id=int(pk)
+                new_category.save()
+                return HttpResponseRedirect("/jizhang/index_category")
+            else:
+                out_errors = "父类别不能和子类别重复!"
+    else:
+        category_list = get_object_or_404(Category, id=pk) 
+        form = CategoryForm(request,instance=category_list)
+    context = {'form':form,'username':request.user.username,'out_errors':out_errors}
+    return render_to_response('jizhang/new_category.html',RequestContext(request,context))
 
 	
 @login_required	
 def find_item(request):
-	if request.method == 'POST':
-		form = FindItemForm(data=request.POST)
-		if form.is_valid():
-			item_list = Item.objects.filter(pub_date__range=(form.cleaned_data['start_date'],form.cleaned_data['end_date']))
-			return render_to_response('index_item.html', RequestContext(request,{'item_list': item_list}))
-	else:
-		tmp_date = timezone.now()-datetime.timedelta(days=60)
-		form = FindItemForm(initial={'start_date':tmp_date.date(),'end_date':timezone.now().date()})
-	context = {'form':form,'username':request.user.username}
-	return render_to_response('find_item.html',RequestContext(request,context))
+    if request.method == 'POST':
+        form = FindItemForm(data=request.POST)
+        if form.is_valid():
+            item_list = Item.objects.filter(pub_date__range=(form.cleaned_data['start_date'],form.cleaned_data['end_date']))
+            return render_to_response('jizhang/index_item.html', RequestContext(request,{'item_list': item_list}))
+    else:
+        tmp_date = timezone.now()-datetime.timedelta(days=60)
+        form = FindItemForm(initial={'start_date':tmp_date.date(),'end_date':timezone.now().date()})
+    context = {'form':form,'username':request.user.username}
+    return render_to_response('jizhang/find_item.html',RequestContext(request,context))
 
 	
 	
@@ -170,52 +194,173 @@ def find_item(request):
 @login_required
 def report_item(request):
 	
-	cursor = connection.cursor()
-	cursor.execute("select \
+    cursor = connection.cursor()
+    cursor.execute("select \
         sum(case when pub_date>=u'2014-05-01' and pub_date<u'2014-06-01' then price else 0 end) as u'5月开支', \
-		sum(case when pub_date>=u'2014-06-01' and pub_date<u'2014-07-01' then price else 0 end) as u'6月开支', \
-		jizhang_category.name,jizhang_category.id, jizhang_category.p_category_id from jizhang_item,jizhang_category \
-		where jizhang_category.id=jizhang_item.category_id and jizhang_category.user_id = %s group by category_id",[request.user.id])
-	
-	aa=[]
-	for category in  cursor.fetchall():
-		num = len(category)
-		if not category[num-1]:
-			aa.extend([ [category[num-2],  category[num-3], 0, category[0:num-3]]])
-		else:
-			aa.extend([ [category[num-2],  category[num-3], category[num-1], category[0:num-3]]])
-		print(aa)
-	category_sort,row_start = sort_category(aa,0,0,0)
-	
-	bb=[]	
-	for category in category_sort:
-		list_sum = [str(x) for x in category[3]]
-		list_sum.append(category[1])
-		bb.append(list_sum)
+        sum(case when pub_date>=u'2014-06-01' and pub_date<u'2014-07-01' then price else 0 end) as u'6月开支', \
+        jizhang_category.name,jizhang_category.id, jizhang_category.p_category_id from jizhang_item,jizhang_category \
+        where jizhang_category.id=jizhang_item.category_id and jizhang_category.user_id = %s group by category_id",[request.user.id])
 
-	
-	context = {'username':request.user.username,'hello2you':'This function is coming soon!','category_list':bb}
-	return render_to_response('report_item.html',RequestContext(request,context))		
+    aa=[]
+    for category in  cursor.fetchall():
+        num = len(category)
+        if not category[num-1]:
+            aa.extend([ [category[num-2],  category[num-3], 0, category[0:num-3]]])
+        else:
+            aa.extend([ [category[num-2],  category[num-3], category[num-1], category[0:num-3]]])
+        print(aa)
+    category_sort,row_start = sort_category(aa,0,0,0)
 
-def gb2312(val):
+    bb=[]	
+    for category in category_sort:
+        list_sum = [str(x) for x in category[3]]
+        list_sum.append(category[1])
+        bb.append(list_sum)
+
+
+    context = {'username':request.user.username,'hello2you':'This function is coming soon!','category_list':bb}
+    return render_to_response('jizhang/report_item.html',RequestContext(request,context))		
+
+def gb_encode(val):
     return (val.encode('gb2312'))
+def gb_decode(val):
+    return (val.decode('gb2312').encode('utf-8'))
+    
     
 @login_required
 def export_to_item_csv(request):
 
-	response = HttpResponse(content_type='text/csv')
-	response['Content-Disposition'] = 'attachment; filename="export_item.csv"'
-	writer = csv.writer(response)
+    response = HttpResponse(content_type='text/csv')
+    filename = 'export_item_'+datetime.datetime.now().strftime("%Y-%m-%d")+'.csv'
+    response['Content-Disposition'] = 'attachment; filename="'+filename+'"'
+    writer = csv.writer(response)
 
 
 
-	writer.writerow((gb2312(u'日期'),gb2312(u'价格'),gb2312(u'分类'),gb2312(u'备注')))
-	for item in Item.objects.filter(category__user__username=request.user.username).order_by('pub_date'):
-		writer.writerow((item.pub_date, item.price, gb2312(item.category.name), gb2312(item.comment)))
+    writer.writerow((gb_encode(u'日期'),gb_encode(u'价格'),gb_encode(u'分类'),gb_encode(u'备注')))
+    items = Item.objects.filter(category__user__username=request.user.username).order_by('pub_date')
+    if not items:
+        pass
+    else:
+        for item in items:
+            writer.writerow((item.pub_date, item.price, gb_encode(item.category.name), gb_encode(item.comment)))
 
-	return response
-	
-	
+    return response
+
+    
+@login_required
+def export_to_category_csv(request):
+
+    response = HttpResponse(content_type='text/csv')
+    filename = 'export_category_'+datetime.datetime.now().strftime("%Y-%m-%d")+'.csv'
+
+    response['Content-Disposition'] = 'attachment; filename="'+filename+'"'
+    writer = csv.writer(response)
+
+
+    writer.writerow((gb_encode(u'父类名称'),gb_encode(u'类别名称'),gb_encode(u'是否收入')))
+    categorys = Category.objects.filter(user__username=request.user.username).order_by('p_category')
+    if not categorys:
+        pass
+    else:
+        for category in categorys:
+            if not category.p_category:
+                writer.writerow((P_CATEGORY_NULL_NAME, gb_encode(category.name), category.isIncome))
+            else:
+                writer.writerow((gb_encode(category.p_category.name), gb_encode(category.name), category.isIncome))
+
+    return response
+    
+    
+def handle_uploaded_file_item(f):
+    destination = open('upload/csv/name.csv','wb')
+    for chunk in f.chunks(): 
+        destination.write(chunk)
+    destination.close()
+    
+    csv_file = open('upload/csv/name.csv','rb')
+    reader = csv.reader(csv_file)
+    i=0
+    for line in reader:
+        print line[0]+line[1]+line[2]+line[3]
+        if i>0:
+            category = Category.objects.filter(name=gb_decode(line[2]))
+            if not category:
+                pass
+            else:
+                data=Item(pub_date=datetime.datetime.strptime(line[0],"%Y-%m-%d"),
+                    price=line[1], 
+                    category = category[0], 
+                    comment = gb_decode(line[3]))
+                data.save()
+        i=i+1
+    csv_file.close()
+
+    
+def handle_uploaded_file_category(f, request):
+    destination = open('upload/csv/name.csv','wb')
+    for chunk in f.chunks(): 
+        destination.write(chunk)
+    destination.close()
+    
+    csv_file = open('upload/csv/name.csv','rb')
+    reader = csv.reader(csv_file)
+    i=0
+    for line in reader:
+        print line[0]+line[1]+line[2]
+        if i>0:
+            if line[0]==P_CATEGORY_NULL_NAME:
+                data=Category(name=gb_decode(line[1]), 
+                    isIncome = (line[2]=='True'),
+                    user=request.user)
+                
+                data.save()
+            else:
+                pcategory = Category.objects.filter(name=gb_decode(line[0]))
+                if not pcategory:
+                    pass
+                else:
+                    data=Category(p_category = pcategory[0],
+                        name=gb_decode(line[1]), 
+                        isIncome = (line[2]=='True'),
+                        user=request.user)
+                    
+                    data.save()                
+     
+        i=i+1
+    csv_file.close()    
+    
+@login_required
+def import_item_csv(request):
+
+    if request.method == 'POST':
+        form = UpLoadFileForm(request.POST,request.FILES)
+        if form.is_valid():
+            handle_uploaded_file_item(request.FILES['upLoadFile'])
+            return HttpResponseRedirect("/jizhang")
+           
+    else:
+        form = UpLoadFileForm()
+
+    context = {'form':form,'username':request.user.username}
+    return render_to_response('jizhang/import_item_csv.html', RequestContext(request,context))	
+
+    
+@login_required
+def import_category_csv(request):
+
+    if request.method == 'POST':
+        form = UpLoadFileForm(request.POST,request.FILES)
+        if form.is_valid():
+            handle_uploaded_file_category(request.FILES['upLoadFile'], request)
+            return HttpResponseRedirect("/jizhang/index_category")
+           
+    else:
+        form = UpLoadFileForm()
+
+    context = {'form':form,'username':request.user.username}
+    return render_to_response('jizhang/import_category_csv.html', RequestContext(request,context))
+    
 """
   
   

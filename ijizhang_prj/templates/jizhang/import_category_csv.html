@@ -1,9 +1,13 @@
+{% extends "base_ijizhang.html" %}
+{%block title%}导入分类{%endblock%}
 
-{% include "header.html" %}
+
+
+{% block content %}
 {% include "welcome.html" %}
 
 
-<form method="post" action=""  role="form" >
+<form enctype="multipart/form-data" method="post" action=""  role="form" >
 {% csrf_token %}
 
 {% if out_errors %}
@@ -15,12 +19,10 @@
 {% for field in form %}
 
     {% if field.field.widget.attrs.checkbox %}
-        
         <div class="checkbox">
         {{ field.errors }}
-        <label>
+        
         {{ field }}{{ field.label }} 
-        </label>
         </div>
 
     {% else %}
@@ -37,4 +39,6 @@
 <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 提交</button>
 </form>
 
-{% include "footer.html" %}
+{% include "footer_button.html" %}
+
+{%endblock%}

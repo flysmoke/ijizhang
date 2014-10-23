@@ -18,9 +18,9 @@ class ItemForm(ModelForm):
 		
     def save(self):
         new_item = Item(category=self.cleaned_data['category'],
-        price=self.cleaned_data['price'],
-        pub_date=self.cleaned_data['pub_date'],
-        comment=self.cleaned_data['comment'])
+            price=self.cleaned_data['price'],
+            pub_date=self.cleaned_data['pub_date'],
+            comment=self.cleaned_data['comment'])
         if not new_item.category.isIncome:
             if new_item.price>0:
                 new_item.price = new_item.price*-1
@@ -45,10 +45,9 @@ class ItemForm(ModelForm):
         self.fields['category'].widget = forms.Select(attrs={'class':"form-control"})
         self.fields['category'].choices = bb
         
-        self.fields['pub_date'].widget = forms.DateInput(attrs={'class':"form-control"})
-        self.fields['price'].widget = forms.NumberInput(attrs={'class':"form-control"})
+        self.fields['pub_date'].widget = forms.DateInput(attrs={'class':"datepicker form-control"})
+        self.fields['price'].widget = forms.TextInput(attrs={'class':"form-control"})
         self.fields['comment'].widget = forms.TextInput(attrs={'class':"form-control"})
-
 
 		
 class CategoryForm(ModelForm):
@@ -101,8 +100,8 @@ class NewCategoryForm(CategoryForm):
 
 	
 class FindItemForm(forms.Form):	
-	start_date = forms.DateField(label=u'开始时间',widget=forms.DateInput(attrs={'size': 20,'class':"form-control"}))
-	end_date = forms.DateField(label=u'结束时间',widget=forms.DateInput(attrs={'size': 20,'class':"form-control"}))	
+	start_date = forms.DateField(label=u'开始时间',widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))
+	end_date = forms.DateField(label=u'结束时间',widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))	
 	def clean_end_date(self):
 		if self.cleaned_data['end_date'] > self.cleaned_data['start_date']:
 			return self.cleaned_data['end_date']
@@ -111,3 +110,5 @@ class FindItemForm(forms.Form):
 
 			
 	
+class UpLoadFileForm(forms.Form):	
+	upLoadFile = forms.FileField(label=u'导入文件(*.csv)',widget=forms.ClearableFileInput(attrs={'size': 20,'class':"form-control"}))

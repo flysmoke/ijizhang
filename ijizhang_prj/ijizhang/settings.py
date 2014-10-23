@@ -84,7 +84,7 @@ STATICFILES_DIRS = (
     ("bootstrap",os.path.join(STATIC_ROOT,"libs/bootstrap").replace('\\','/')),  
 )
 
-TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
+TEMPLATE_DIRS = (os.path.join(BASE_DIR, "./templates"),)
 LOGIN_REDIRECT_URL = '/accounts/'
 
 from settings_local import *

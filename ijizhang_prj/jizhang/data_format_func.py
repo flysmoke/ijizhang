@@ -38,46 +38,7 @@ def check_parent_category(id,pid,choice):
 			#print(aa[1])
 	return isvalid
 
-	
-"""	
-def report_sql(report_input, month_array):
-	valid_user = report_input['username']
-	sql = "select "
-	count = 0
-	for row in month_array:
-		row_date = row -day(1)
-		sql=sql+"SUM( CASE WHEN MONTH( jizhang_item.pub_date ) =MONTH('%s') AND 	
-			YEAR( jizhang_item.pub_date ) =YEAR('%s') AND jizhang_category.id = jizhang_item.category.id THEN jizhang_item.price 
-			ELSE 0  END ) AS '%s',"
-		para[count]=row
-		count=count+1
-	
 
-	start_date = report_input['start_date_year']."-".$report_input['start_date_mon']."-01";
-	if($report_input['end_date_mon']==12)
-		$end_date = ($report_input['end_date_year']+1)."-01-01";
-	else
-		$end_date = $report_input['end_date_year']."-".($report_input['end_date_mon']+1)."-01";
-
-	$sql .= "SUM( CASE WHEN t_account.account_date >= date('$start_date')
-		AND t_account.account_date < date('$end_date') AND t_category.category_id = t_account.category_id
-	  THEN t_account.account_money ELSE 0  END ) AS 'total',
-		t_category.category_name, t_category.category_level, t_category.category_id, t_category.category_pid
-		, t_category.is_income FROM t_account, t_category WHERE t_account.user_id = '$valid_user'
-		";
-	
-	if($report_input['is_income']==2)
-		$sql.="";
-	else
-		$sql.=" AND t_category.is_income=".$report_input['is_income']." ";
-	
-	$sql.="GROUP BY t_category.category_name WITH rollup";
-
-	return $sql;
-
-}	
-"""
-	
 	
 if __name__ == '__main__':
 	

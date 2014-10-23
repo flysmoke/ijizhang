@@ -27,7 +27,7 @@ def register(request):
             _login(request,username,password)#注册完毕 直接登陆
             return HttpResponseRedirect("/jizhang/first_login")    
     template_var["form"]=form        
-    return render_to_response("register.html",template_var,context_instance=RequestContext(request))
+    return render_to_response("accounts/register.html",template_var,context_instance=RequestContext(request))
 
 	
 def login(request):
@@ -40,7 +40,7 @@ def login(request):
             _login(request,form.cleaned_data["username"],form.cleaned_data["password"])
             return HttpResponseRedirect("/")
     template_var["form"]=form        
-    return render_to_response("login.html",template_var,context_instance=RequestContext(request))
+    return render_to_response("accounts/login.html",template_var,context_instance=RequestContext(request))
     
 	
 def _login(request,username,password):
@@ -62,5 +62,5 @@ def _login(request,username,password):
 	
 def logout(request):
 	auth_logout(request)
-	return render_to_response('logout.html',RequestContext(request,{'hello2you':'Thanks for your visit!'}))	
+	return render_to_response('accounts/logout.html',RequestContext(request,{'hello2you':'Thanks for your visit!'}))	
 	

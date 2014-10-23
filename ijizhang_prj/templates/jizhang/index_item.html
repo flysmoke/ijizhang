@@ -1,10 +1,26 @@
 
-{% include "header.html" %}
+{% extends "base_ijizhang.html" %}
+{%block title%}收支列表{%endblock%}
+{%block extra_header%}
+<script>
+    $(function () {
+        $("#all").click(function () {
+            var checked_status = this.checked;
+            $("input[name=del_id]").each(function () {
+                this.checked = checked_status;
+            });
+        });
+    });
+</script>
+{% endblock%}
+        
+{% block content %}
 {% include "welcome.html" %}
 
         <div>
-            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:new_item' %}"'><span class="glyphicon glyphicon-plus"></span> 新建帐单</button>
-            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:export_to_item_csv' %}"'><span class="glyphicon glyphicon-floppy-save"></span> 导出为csv</button>
+            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:new_item' %}"'><span class="glyphicon glyphicon-plus"></span> 新建收支</button>
+            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:export_to_item_csv' %}"'><span class="glyphicon glyphicon-floppy-save"></span> 导出</button>
+            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:import_item_csv' %}"'><span class="glyphicon glyphicon-floppy-open"></span> 导入</button>
 
             <!-- Button trigger modal -->
 
@@ -18,8 +34,8 @@
 
             <table class="table table-striped">
 
-                <tr class="info"><td><strong>时间</strong></td>
-                    <td><strong>价格(元)</strong></td>
+                <tr class="info"><td><strong><a href="{%url 'jizhang:index_item' %}">时间</a></strong></td>
+                    <td><strong><a href="{%url 'jizhang:index_price_item' %}">价格(元)</a></strong></td>
                     <td><strong>分类</strong></td>
                     <td><strong>备注</strong></td>
                     <td><strong><input type="checkbox" id="all" />全选删除?</strong></td>
@@ -77,8 +93,9 @@
 
         </form>
 
+        {% include "footer_button.html" %}
 
+{%endblock%}
 
-{% include "footer.html" %}
 
 

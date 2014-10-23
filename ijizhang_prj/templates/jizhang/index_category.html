@@ -1,8 +1,24 @@
-
-{% include "header.html" %}
+{% extends "base_ijizhang.html" %}
+{%block title%}分类列表{%endblock%}
+{%block extra_header%}
+<script>
+    $(function () {
+        $("#all").click(function () {
+            var checked_status = this.checked;
+            $("input[name=del_id]").each(function () {
+                this.checked = checked_status;
+            });
+        });
+    });
+</script>
+{% endblock%}
+        
+{% block content %}
 {% include "welcome.html" %}
         <div>
             <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:new_category' %}"'><span class="glyphicon glyphicon-plus"></span> 新建分类</button>
+            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:export_to_category_csv' %}"'><span class="glyphicon glyphicon-save"></span> 导出</button>
+            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'jizhang:import_category_csv' %}"'><span class="glyphicon glyphicon-open"></span> 导入</button>
             <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
             <span class="glyphicon glyphicon-trash"></span> 删除所选
             </button>
@@ -54,4 +70,6 @@
             </div>
         </form>
 
-{% include "footer.html" %}
+        {% include "footer_button.html" %}
+
+{%endblock%}
