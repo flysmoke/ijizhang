@@ -15,7 +15,7 @@ from django.db import connection
 
 #myApp package
 from jizhang.models import Item, Category
-from jizhang.forms import ItemForm, CategoryForm, NewCategoryForm, FindItemForm, UpLoadFileForm
+from jizhang.forms import ItemForm, CategoryForm, NewCategoryForm, FindItemForm, UpLoadFileForm, ReportForm
 from jizhang.data_format_func import sort_category, check_parent_category
 
 P_CATEGORY_NULL_NAME = '------'
@@ -112,7 +112,7 @@ def new_item(request):
     else:
         form = ItemForm(request,initial={'pub_date':timezone.now().date()})
 
-    most_used_categorys = Category.objects.annotate(num_items=Count('item')).order_by('-num_items')[:6]
+    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).order_by('-num_items')[:6]
     context = {'form':form,'username':request.user.username,'most_used_categorys':most_used_categorys}
     return render_to_response('jizhang/new_item.html',RequestContext(request,context))
 
@@ -145,7 +145,7 @@ def edit_item(request,pk):
         item_list = get_object_or_404(Item, id=pk)
         form = ItemForm(request,instance=item_list)
 
-    most_used_categorys = Category.objects.annotate(num_items=Count('item')).order_by('-num_items')[:6]
+    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).order_by('-num_items')[:6]
     context = {'form':form,'username':request.user.username,'most_used_categorys':most_used_categorys}
     return render_to_response('jizhang/new_item.html',RequestContext(request,context))
 
@@ -189,38 +189,49 @@ def find_item(request):
     return render_to_response('jizhang/find_item.html',RequestContext(request,context))
 
 	
-	
+def group_by(query_set, group_by):
+    '''util:django 获取分类列表'''
+    #assert isinstance(query_set, QuerySet)
+    django_groups = query_set.values(group_by).annotate(Sum(group_by))
+    groups = []
+    for dict_ in django_groups:
+        groups.append(dict_.get(group_by))
+    return groups
 
 @login_required
 def report_item(request):
-	
-    cursor = connection.cursor()
-    cursor.execute("select \
-        sum(case when pub_date>=u'2014-05-01' and pub_date<u'2014-06-01' then price else 0 end) as u'5月开支', \
-        sum(case when pub_date>=u'2014-06-01' and pub_date<u'2014-07-01' then price else 0 end) as u'6月开支', \
-        jizhang_category.name,jizhang_category.id, jizhang_category.p_category_id from jizhang_item,jizhang_category \
-        where jizhang_category.id=jizhang_item.category_id and jizhang_category.user_id = %s group by category_id",[request.user.id])
+    report_data={}
+    
+    if request.method == 'POST':
+        form = ReportForm(data=request.POST)
+        if form.is_valid():
+            start_date = form.cleaned_data['start_date']
+            if form.cleaned_data['report_range']=='0':
+                date_step = datetime.timedelta(days=30) 
+            else:
+                date_step = datetime.timedelta(days=365)
+            
+            #first filter username
+            report_query_user = Category.objects.filter(user__username=request.user.username)
 
-    aa=[]
-    for category in  cursor.fetchall():
-        num = len(category)
-        if not category[num-1]:
-            aa.extend([ [category[num-2],  category[num-3], 0, category[0:num-3]]])
-        else:
-            aa.extend([ [category[num-2],  category[num-3], category[num-1], category[0:num-3]]])
-        print(aa)
-    category_sort,row_start = sort_category(aa,0,0,0)
-
-    bb=[]	
-    for category in category_sort:
-        list_sum = [str(x) for x in category[3]]
-        list_sum.append(category[1])
-        bb.append(list_sum)
-
-
-    context = {'username':request.user.username,'hello2you':'This function is coming soon!','category_list':bb}
+            #second filter start and end date
+            report_query_date = []
+            for i in range(0,5):
+                end_date = start_date+date_step
+                report_query_date.append(report_query_user.filter(item__pub_date__range=(start_date,end_date)).annotate(Sum('item__price')))
+                start_date = end_date+datetime.timedelta(days=1) 
+            #third annotate sum
+            #fouth data process to plot
+            report_data = report_query_date
+    else:
+        tmp_date = timezone.now()-datetime.timedelta(days=120)
+        form = ReportForm(initial={'start_date':tmp_date.date()})
+    
+    context = {'form':form,'username':request.user.username,'report_data':report_data}
     return render_to_response('jizhang/report_item.html',RequestContext(request,context))		
 
+    
+    
 def gb_encode(val):
     return (val.encode('gb2312'))
 def gb_decode(val):
@@ -360,6 +371,8 @@ def import_category_csv(request):
 
     context = {'form':form,'username':request.user.username}
     return render_to_response('jizhang/import_category_csv.html', RequestContext(request,context))
+    
+    
     
 """
   

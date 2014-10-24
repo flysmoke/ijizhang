@@ -1,30 +1,48 @@
-{% include "header.html" %}
+{% extends "base_ijizhang.html" %}
+{%block title%}生成报表{%endblock%}
+
+{%block extra_header%}
+<script src="/static/libs/js/datepicker.js"> </script>
+{% endblock %}
+
+{% block content %}
 {% include "welcome.html" %}
 
 
-<table class="table table-striped">
+<form method="post" action=""  role="form" >
+{% csrf_token %}
 
-
-	<tr>
-
-		<td>7月总计</td>
-		<td>8月总计</td>
-		<td>分类名</td>
-	</tr>
-{% if category_list %}
-	{% for category in category_list %}
-	<tr>
-		{% for item in category %}
-		<td>{{ item}}</td>
-		{% endfor %}
-	</tr>
-	{% endfor %}
-{% else %}
-	<p>No categorys are available.</p>
+{% if out_errors %}
+<ul class="errorlist"><li>{{out_errors}}</li>
 {% endif %}
 
-<p></p>
-</table>
 
-{% include "footer.html" %}
 
+{% for field in form %}
+
+    {% if field.field.widget.attrs.checkbox %}
+        <div class="checkbox">
+        {{ field.errors }}
+        
+        {{ field }}{{ field.label }} 
+        </div>
+
+    {% else %}
+        <div class="form-group">
+        {{ field.errors }}
+        {{ field.label_tag }} 
+        {{ field }}
+        </div>
+    {% endif %}
+
+{% endfor %}
+
+
+<button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 提交</button>
+</form>
+
+{{report_data}}
+
+{% include "footer_button.html" %}
+
+{%endblock%}

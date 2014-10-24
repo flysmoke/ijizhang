@@ -81,7 +81,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR,'static')
 
 STATICFILES_DIRS = (   
-    ("bootstrap",os.path.join(STATIC_ROOT,"libs/bootstrap").replace('\\','/')),  
+    ("libs",os.path.join(STATIC_ROOT,"libs").replace('\\','/')),  
 )
 
 TEMPLATE_DIRS = (os.path.join(BASE_DIR, "./templates"),)

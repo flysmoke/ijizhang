@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.forms import ModelForm
-
+from django.forms.extras.widgets import SelectDateWidget
 
 # Register your models here.
 from jizhang.models import Item, Category
@@ -112,3 +112,18 @@ class FindItemForm(forms.Form):
 	
 class UpLoadFileForm(forms.Form):	
 	upLoadFile = forms.FileField(label=u'导入文件(*.csv)',widget=forms.ClearableFileInput(attrs={'size': 20,'class':"form-control"}))
+
+class ReportForm(forms.Form):
+    REPORT_RANGES = (
+        (0, _(u'按月统计--从开始时间起4个月')),
+        (1, _(u'按年统计--从开始时间起4年') ),
+    )
+    FIG_TYPES = (
+        (0, _(u'柱状图')),
+        (1, _(u'饼状图') ),
+    )    
+        
+    fig_type = forms.ChoiceField(label='报表类型', widget = forms.Select(attrs={'class':"form-control"}), choices=FIG_TYPES)
+    start_date = forms.DateField(label=u'开始时间',widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))
+    report_range = forms.ChoiceField(label='报表时间', widget = forms.Select(attrs={'class':"form-control"}), choices=REPORT_RANGES)
+    

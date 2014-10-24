@@ -8,6 +8,7 @@ __pycache__/
 # db setting
 *.sqlite3
 settings_local.py
+upload/
 
 # Distribution / packaging
 .Python
