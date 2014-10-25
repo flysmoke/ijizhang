@@ -112,7 +112,7 @@ def new_item(request):
     else:
         form = ItemForm(request,initial={'pub_date':timezone.now().date()})
 
-    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).order_by('-num_items')[:6]
+    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).filter(num_items__gt=1).order_by('-num_items')[:6]
     context = {'form':form,'username':request.user.username,'most_used_categorys':most_used_categorys}
     return render_to_response('jizhang/new_item.html',RequestContext(request,context))
 
@@ -145,7 +145,7 @@ def edit_item(request,pk):
         item_list = get_object_or_404(Item, id=pk)
         form = ItemForm(request,instance=item_list)
 
-    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).order_by('-num_items')[:6]
+    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).filter(num_items__gt=1).order_by('-num_items')[:6]
     context = {'form':form,'username':request.user.username,'most_used_categorys':most_used_categorys}
     return render_to_response('jizhang/new_item.html',RequestContext(request,context))
 
@@ -188,15 +188,6 @@ def find_item(request):
     context = {'form':form,'username':request.user.username}
     return render_to_response('jizhang/find_item.html',RequestContext(request,context))
 
-	
-def group_by(query_set, group_by):
-    '''util:django 获取分类列表'''
-    #assert isinstance(query_set, QuerySet)
-    django_groups = query_set.values(group_by).annotate(Sum(group_by))
-    groups = []
-    for dict_ in django_groups:
-        groups.append(dict_.get(group_by))
-    return groups
 
 @login_required
 def report_item(request):
@@ -212,17 +203,17 @@ def report_item(request):
                 date_step = datetime.timedelta(days=365)
             
             #first filter username
-            report_query_user = Category.objects.filter(user__username=request.user.username)
+            #report_query_user = Category.objects.filter(user__username=request.user.username)
 
             #second filter start and end date
-            report_query_date = []
-            for i in range(0,5):
-                end_date = start_date+date_step
-                report_query_date.append(report_query_user.filter(item__pub_date__range=(start_date,end_date)).annotate(Sum('item__price')))
-                start_date = end_date+datetime.timedelta(days=1) 
+            #report_query_date = []
+            #for i in range(0,5):
+            #    end_date = start_date+date_step
+            #    report_query_date.append(report_query_user.filter(item__pub_date__range=(start_date,end_date)).annotate(Sum('item__price')))
+            #    start_date = end_date+datetime.timedelta(days=1) 
             #third annotate sum
             #fouth data process to plot
-            report_data = report_query_date
+            #report_data = report_query_date
     else:
         tmp_date = timezone.now()-datetime.timedelta(days=120)
         form = ReportForm(initial={'start_date':tmp_date.date()})
