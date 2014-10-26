@@ -1,3 +1,4 @@
+            
             jQuery(function($){   
              $.datepicker.regional['zh-CN'] = {   
                 clearText: '清除',   
@@ -31,6 +32,7 @@
                 isRTL: false};   
                 $.datepicker.setDefaults($.datepicker.regional['zh-CN']);   
             });
+            
             $(document).ready(function() {
                 $(".datepicker").datepicker({changeMonth: true, changeYear: true});
             });
