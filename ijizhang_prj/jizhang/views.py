@@ -29,8 +29,9 @@ def split_page(request, data, page_item_num):
     except PageNotAnInteger:
         item_page = p.page(1)
     except EmptyPage:
-        item_page = p.page(p.num_pages)       
-    return item_page  
+        item_page = p.page(p.num_pages) 
+
+    return item_page,p.page_range  
     
 # item list view
 @login_required
@@ -43,9 +44,9 @@ def index_item(request):
             del_item.delete()
    
     item_list = Item.objects.filter(category__user__username=request.user.username).order_by('-pub_date')
-    item_page = split_page(request, item_list, PAGE_ITEM_NUM)
+    item_page,page_num_list = split_page(request, item_list, PAGE_ITEM_NUM)
 
-    context = {'item_list': item_page,'username':request.user.username}
+    context = {'item_list': item_page,'username':request.user.username,'page_num_list':page_num_list}
     return render_to_response('jizhang/index_item.html', context,context_instance=RequestContext(request))
 
 @login_required
@@ -58,9 +59,9 @@ def index_price_item(request):
             del_item.delete()
    
     item_list = Item.objects.filter(category__user__username=request.user.username).order_by('price')
-    item_page = split_page(request, item_list, PAGE_ITEM_NUM)
+    item_page,page_num_list = split_page(request, item_list, PAGE_ITEM_NUM)
 
-    context = {'item_list': item_page,'username':request.user.username}
+    context = {'item_list': item_page,'username':request.user.username,'page_num_list':page_num_list}
     return render_to_response('jizhang/index_item.html', context,context_instance=RequestContext(request))
 
 	
@@ -189,9 +190,55 @@ def find_item(request):
     return render_to_response('jizhang/find_item.html',RequestContext(request,context))
 
 
+
+def table_report_data_format(report_data, isIncome, total=False):
+    exist_categorys=[]
+    table_data = []
+    i=0
+    j=0
+    #1. find the exist categorys, sort with isIncome
+    for datas in report_data:
+        if datas:
+            for data in datas:
+                if data.name in exist_categorys or (total==False and data.isIncome<>isIncome):
+                    pass
+                else:
+                    exist_categorys.append(data.name)
+                    
+    #3. generate the table data
+    for datas in report_data:
+        #generate the null data
+        null_data = [0]*len(exist_categorys)
+        sum_category = 0
+        if datas:
+            for data in datas:
+                if (total==True or data.isIncome==isIncome):
+                    null_data[exist_categorys.index(data.name)] = int(data.item__price__sum)
+                    sum_category = sum_category+int(data.item__price__sum)
+        null_data.append(sum_category)
+        table_data.append(null_data)
+    print table_data
+    #4. format
+    format_data=[]
+    exist_categorys.append(u'总和')
+    for category in exist_categorys:
+        data = []
+        sum_data = 0
+        for i in range(0,len(table_data)):
+            data.append(table_data[i][j])
+            sum_data=sum_data+table_data[i][j]
+        data.append(sum_data)
+        format_data.append({'name':category,'data':data})
+        j=j+1
+    print format_data
+    return format_data
+
+
 @login_required
 def report_item(request):
-    report_data={}
+    table_data_shouru={}
+    table_data_zhichu={}
+    report_month = []
     
     if request.method == 'POST':
         form = ReportForm(data=request.POST)
@@ -199,28 +246,41 @@ def report_item(request):
             start_date = form.cleaned_data['start_date']
             if form.cleaned_data['report_range']=='0':
                 date_step = datetime.timedelta(days=30) 
+                data_len = 6
             else:
                 date_step = datetime.timedelta(days=365)
+                data_len = 3
             
             #first filter username
             report_query_user = Category.objects.filter(user__username=request.user.username)
 
             #second filter start and end date
+            #third annotate sum
             report_query_date = []
-            for i in range(0,5):
+            
+            for i in range(0,data_len):
+                report_month.append(start_date.strftime("%Y-%m"))
                 end_date = start_date+date_step
                 report_query_date.append(report_query_user.filter(item__pub_date__range=(start_date,end_date)).annotate(Sum('item__price')))
                 start_date = end_date+datetime.timedelta(days=1) 
-            #third annotate sum
-            #fouth data process to plot
-            report_data = report_query_date
+                
+            
+            #fouth data process to show
+            if form.cleaned_data['report_type']=='1':
+                table_data_shouru = table_report_data_format(report_query_date, True, False)
+                table_data_zhichu = table_report_data_format(report_query_date, False, False)
+            else:
+                table_data_shouru = table_report_data_format(report_query_date, True, True)
+
+            
     else:
-        tmp_date = timezone.now()-datetime.timedelta(days=120)
+        tmp_date = timezone.now()-datetime.timedelta(days=30*6)
         form = ReportForm(initial={'start_date':tmp_date.date()})
     
-    context = {'form':form,'username':request.user.username,'report_data':report_data}
-    return render_to_response('jizhang/report_item.html',RequestContext(request,context))		
-
+    context = {'form':form,'username':request.user.username,'report_month':report_month,
+        'table_data_shouru':table_data_shouru,'table_data_zhichu':table_data_zhichu}
+    return render_to_response('jizhang/report_item.html',RequestContext(request,context))       
+    
     
     
 def gb_encode(val):
@@ -365,118 +425,7 @@ def import_category_csv(request):
     
     
     
-"""
-  
-  
-  "select sum(case when pub_date>='2014-05-01' and pub_date<='2014-05-30' then price else 0 end) as '5月收支',   sum(case when pub_date>='2014-06-01' and pub_date<='2014-06-30' then price else 0 end) as '6月收支',  category from jizhang_item group by category"
-  
-// generate the month array of start and end
-function generate_month_array($report_input){
-	$count=0;
-	for($year = $report_input['start_date_year']; $year <=$report_input['end_date_year'];$year++){
-		for($month=1;$month<=12;$month++){
-			
-			if($report_input['start_date_year']!=$report_input['end_date_year']){
-				if($year== $report_input['start_date_year'] && $month>=$report_input['start_date_mon']){
-					$month_array[$count]=$year."-".$month;
-					$count++;
-				}
-				if($year== $report_input['end_date_year'] && $month<=$report_input['end_date_mon']){
-					$month_array[$count]=$year."-".$month;
-					$count++;
-				}
-				if($year< $report_input['end_date_year'] && $year> $report_input['start_date_year']){
-					$month_array[$count]=$year."-".$month;
-					$count++;
-				}				
-			}else{
-				if($month<=$report_input['end_date_mon'] and $month>=$report_input['start_date_mon']){
-					$month_array[$count]=$year."-".$month;
-					$count++;
-				}
-			}
-		}
-	}
-	return $month_array;
-}
 
-// generate sql from input date
-function report_sql($report_input, $month_array){
-	$valid_user = $_SESSION['valid_user'];
-	$sql = "select ";
-	$count = 0;
-	foreach( $month_array as $row){
-		$row_date = $row."-01";
-		$sql.="SUM( CASE WHEN MONTH( t_account.account_date ) =MONTH('$row_date') AND 	
-			YEAR( t_account.account_date ) =YEAR('$row_date') AND t_category.category_id = t_account.category_id THEN t_account.account_money 
-			ELSE 0  END ) AS '$row',";
-		$count++;
-	}
-
-	$start_date = $report_input['start_date_year']."-".$report_input['start_date_mon']."-01";
-	if($report_input['end_date_mon']==12)
-		$end_date = ($report_input['end_date_year']+1)."-01-01";
-	else
-		$end_date = $report_input['end_date_year']."-".($report_input['end_date_mon']+1)."-01";
-
-	$sql .= "SUM( CASE WHEN t_account.account_date >= date('$start_date')
-		AND t_account.account_date < date('$end_date') AND t_category.category_id = t_account.category_id
-	  THEN t_account.account_money ELSE 0  END ) AS 'total',
-		t_category.category_name, t_category.category_level, t_category.category_id, t_category.category_pid
-		, t_category.is_income FROM t_account, t_category WHERE t_account.user_id = '$valid_user'
-		";
-	
-	if($report_input['is_income']==2)
-		$sql.="";
-	else
-		$sql.=" AND t_category.is_income=".$report_input['is_income']." ";
-	
-	$sql.="GROUP BY t_category.category_name WITH rollup";
-
-	return $sql;
-
-}
-
-
-
-
-// generate display date from mysql date
-function sort_sum_account($row_category,$category_pid,&$row_start, $month_array, $row_pid){
-   $row_num = count($row_category);
-   $tmp = array();
-   for($row_i=$row_start;$row_i<$row_num;$row_i++){
-    $value = $row_category[$row_i];
-    if($value['category_pid']==$category_pid){
-     $tmp = $row_category[$row_i];
-     $row_category[$row_i]=$row_category[$row_start];
-     $row_category[$row_start]=$tmp;
-     
-     //echo "<p><p> row_start=".$row_start.", row_pid=".$row_pid;
-     //display_report_output_form($row_category, $month_array);
-     
-     //sum row_start to row_pid
-     if($category_pid>0){
-    		foreach($month_array as $month_row){
-     			$row_category[$row_pid][$month_row]+=$row_category[$row_start][$month_row];
-    		}
-    		$row_category[$row_pid]['total']+=$row_category[$row_start]['total'];
-   	 } 
-   	 //echo "<p><p>row_start=".$row_start.", row_pid=".$row_pid;  
-     //display_report_output_form($row_category, $month_array);
-     $row_start++;
-     $row_category = sort_sum_account($row_category,$value['category_id'],$row_start, $month_array,$row_pid);
-     
-     if($category_pid==0)
-     	 $row_pid = $row_start;
-     //echo "row_start=".$row_start.", row_pid=".$row_pid; 
-   
-    }
-   }
-   return $row_category;
-}
-  
-  
- """
 	
 def first_login_category(userid):
     new_category=Category(name=u'工作收入',isIncome=True,user_id=userid)

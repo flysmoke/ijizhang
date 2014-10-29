@@ -115,15 +115,15 @@ class UpLoadFileForm(forms.Form):
 
 class ReportForm(forms.Form):
     REPORT_RANGES = (
-        (0, _(u'按月统计--从开始时间起4个月')),
-        (1, _(u'按年统计--从开始时间起4年') ),
-    )
-    FIG_TYPES = (
-        (0, _(u'柱状图')),
-        (1, _(u'饼状图') ),
-    )    
-        
-    fig_type = forms.ChoiceField(label=u'报表类型', widget = forms.Select(attrs={'class':"form-control"}), choices=FIG_TYPES)
+        (0, _(u'按月统计--从开始时间起6个月')),
+        (1, _(u'按年统计--从开始时间起3年') ),
+    ) 
+    REPORT_TYPES = (
+        (0, _(u'收入表和支出表合并统计') ),
+        (1, _(u'收入表和支出表分开统计')),
+    ) 
+    
+    report_type = forms.ChoiceField(label='报表类型', widget = forms.Select(attrs={'class':"form-control"}), choices=REPORT_TYPES)
     start_date = forms.DateField(label=u'开始时间',widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))
-    report_range = forms.ChoiceField(label=u'报表时间', widget = forms.Select(attrs={'class':"form-control"}), choices=REPORT_RANGES)
+    report_range = forms.ChoiceField(label='报表时间', widget = forms.Select(attrs={'class':"form-control"}), choices=REPORT_RANGES)
     

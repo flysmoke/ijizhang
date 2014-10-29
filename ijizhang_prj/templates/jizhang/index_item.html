@@ -57,21 +57,26 @@
 
 
             </table>
-            <h5>
-            <span class="step-links">
-                {% if item_list.has_previous %}
-                    <a href="?page={{ item_list.previous_page_number }}">上一页</a>
-                {% endif %}
-                {% if item_list.number %}
-                    <span class="current">
-                    第 {{ item_list.number }} 页，共 {{ item_list.paginator.num_pages }} 页
-                    </span>
-                {% endif %}
-                {% if item_list.has_next %}
-                    <a href="?page={{ item_list.next_page_number }}">下一页</a>
-                {% endif %}
-            </span>
-            </h5>
+            
+
+
+    <ul class="pagination">
+        {% if item_list.has_previous %}
+           <li><a href="?page={{ item_list.previous_page_number }}">&laquo;</a></li>
+        {% else%}
+           <li class="disable"><a>&laquo;</a></li>
+        {% endif %}
+        {% for i in page_num_list %}                            
+           <li {%ifequal item_list.number forloop.counter%}class="active"{%endifequal%}><a href="?page={{ i }}">{{i}}</a></li>
+        {% endfor %}
+        {% if item_list.has_next %}
+           <li><a href="?page={{ item_list.next_page_number }}">&raquo;</a></li>
+        {% else %}
+           <li class="disable"><a>&raquo;</a></li>
+        {% endif %}
+     </ul>
+
+        
             <!-- Modal -->
             <div class="modal fade" backdrop="static" id="myModal" tabindex="-1"  role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
               <div class="modal-dialog">

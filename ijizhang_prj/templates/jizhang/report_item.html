@@ -41,7 +41,66 @@
 <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 提交</button>
 </form>
 
-{{report_data}}
+
+{% if table_data_shouru%}
+    {% if table_data_zhichu%}
+        <h3>收入报表</h3>
+    {%else%}
+        <h3>收入支出报表</h3>
+    {%endif%}
+    <table class="table table-striped">
+        <tr class="info">
+            {% if table_data_zhichu%}
+            <td>收入分类</td>
+            {%else%}
+            <td>分类</td>
+            {%endif%}
+            
+            {% for item in report_month %}
+            <td>{{item}}</td>
+            {%endfor%}
+            
+            {% if table_data_zhichu%}
+            <td>收入总和</td>
+            {%else%}
+            <td>分类总和</td>
+            {%endif%}        
+        </tr>
+
+        {% for item in table_data_shouru %}
+        <tr class="{% cycle ,info %}">
+            <td>{{item.name}}</td>
+            {% for price in item.data %}
+            <td>{{price}}</td>
+            {%endfor%}
+        </tr>
+        {%endfor%}
+        
+    </table>
+{%endif%}
+
+{% if table_data_zhichu%}
+<h3>支出报表</h3>
+<table class="table table-striped">
+    <tr class="info">
+        <td>支出分类</td>
+        {% for item in report_month %}
+        <td>{{item}}</td>
+        {%endfor%}
+        <td>支出总和</td>
+    </tr>
+
+    {% for item in table_data_zhichu %}
+    <tr class="{% cycle ,info %}">
+        <td>{{item.name}}</td>
+        {% for price in item.data %}
+        <td>{{price}}</td>
+        {%endfor%}
+    </tr>
+    {%endfor%}
+    
+</table>
+{%endif%}
 
 {% include "footer_button.html" %}
 
