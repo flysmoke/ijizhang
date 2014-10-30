@@ -19,7 +19,7 @@ from jizhang.forms import ItemForm, CategoryForm, NewCategoryForm, FindItemForm,
 from jizhang.data_format_func import sort_category, check_parent_category
 
 P_CATEGORY_NULL_NAME = '------'
-PAGE_ITEM_NUM = 20
+PAGE_ITEM_NUM = 15
     
 def split_page(request, data, page_item_num):
     side_show_page_num = 4
