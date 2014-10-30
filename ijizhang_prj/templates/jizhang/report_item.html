@@ -68,7 +68,7 @@
         </tr>
 
         {% for item in table_data_shouru %}
-        <tr class="{% cycle ,info %}">
+        <tr class="{% cycle ,active %}">
             <td>{{item.name}}</td>
             {% for price in item.data %}
             <td>{{price}}</td>
@@ -91,7 +91,7 @@
     </tr>
 
     {% for item in table_data_zhichu %}
-    <tr class="{% cycle ,info %}">
+    <tr class="{% cycle ,active %}">
         <td>{{item.name}}</td>
         {% for price in item.data %}
         <td>{{price}}</td>

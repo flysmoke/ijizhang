@@ -19,9 +19,11 @@ from jizhang.forms import ItemForm, CategoryForm, NewCategoryForm, FindItemForm,
 from jizhang.data_format_func import sort_category, check_parent_category
 
 P_CATEGORY_NULL_NAME = '------'
-PAGE_ITEM_NUM = 10	
+PAGE_ITEM_NUM = 20
     
 def split_page(request, data, page_item_num):
+    side_show_page_num = 4
+    
     p = Paginator(data , page_item_num)
     page = request.GET.get('page') # Get page
     try:
@@ -29,9 +31,17 @@ def split_page(request, data, page_item_num):
     except PageNotAnInteger:
         item_page = p.page(1)
     except EmptyPage:
-        item_page = p.page(p.num_pages) 
-
-    return item_page,p.page_range  
+        item_page = p.page(p.num_pages)     
+    
+    page_list = [-1]*len(p.page_range)
+    
+    for i in p.page_range:
+        if i==1 or i==p.num_pages or (i<=item_page.number+side_show_page_num and i>=item_page.number-side_show_page_num):
+            page_list[i-1]=i
+        elif i==item_page.number+side_show_page_num+1 or i==item_page.number-side_show_page_num-1:
+            page_list[i-1]=0
+    
+    return item_page, page_list  
     
 # item list view
 @login_required
@@ -65,7 +75,23 @@ def index_price_item(request):
     return render_to_response('jizhang/index_item.html', context,context_instance=RequestContext(request))
 
 	
-	
+@login_required
+def index_category_item(request,pk):
+
+    if request.method == 'POST':
+        del_id = request.POST.getlist('del_id')
+        for item_id in del_id:
+            del_item = get_object_or_404(Item, id=item_id)
+            del_item.delete()
+   
+    item_list = Item.objects.filter(category__user__username=request.user.username).filter(category__id=pk).order_by('price')
+    item_page,page_num_list = split_page(request, item_list, PAGE_ITEM_NUM)
+
+    context = {'item_list': item_page,'username':request.user.username,'page_num_list':page_num_list}
+    return render_to_response('jizhang/index_item.html', context,context_instance=RequestContext(request))
+    
+
+
 # category list view
 @login_required
 def index_category(request):
@@ -113,7 +139,7 @@ def new_item(request):
     else:
         form = ItemForm(request,initial={'pub_date':timezone.now().date()})
 
-    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).filter(num_items__gt=0).order_by('-num_items')[:6]
+    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).filter(num_items__gt=0).order_by('-num_items')[:8]
     context = {'form':form,'username':request.user.username,'most_used_categorys':most_used_categorys}
     return render_to_response('jizhang/new_item.html',RequestContext(request,context))
 
@@ -176,19 +202,33 @@ def edit_category(request,pk):
     return render_to_response('jizhang/new_category.html',RequestContext(request,context))
 
 	
-@login_required	
+@login_required 
 def find_item(request):
     if request.method == 'POST':
-        form = FindItemForm(data=request.POST)
-        if form.is_valid():
-            item_list = Item.objects.filter(pub_date__range=(form.cleaned_data['start_date'],form.cleaned_data['end_date']))
-            return render_to_response('jizhang/index_item.html', RequestContext(request,{'item_list': item_list}))
+        del_id = request.POST.getlist('del_id')
+        
+        if not del_id:
+            form = FindItemForm(data=request.POST)
+            if form.is_valid():
+                item_list = Item.objects.filter(pub_date__range=(form.cleaned_data['start_date'],form.cleaned_data['end_date']))
+                p = Paginator(item_list , PAGE_ITEM_NUM)
+                item_pages = []
+                for i in p.page_range:
+                    item_pages.append(p.page(i))
+
+                return render_to_response('jizhang/find_item_result.html', RequestContext(request,{'item_pages': item_pages}))
+                
+        else:   
+            for item_id in del_id:
+                del_item = get_object_or_404(Item, id=item_id)
+                del_item.delete()
+            return HttpResponseRedirect("/jizhang")
+
     else:
         tmp_date = timezone.now()-datetime.timedelta(days=60)
         form = FindItemForm(initial={'start_date':tmp_date.date(),'end_date':timezone.now().date()})
     context = {'form':form,'username':request.user.username}
     return render_to_response('jizhang/find_item.html',RequestContext(request,context))
-
 
 
 def table_report_data_format(report_data, isIncome, total=False):
