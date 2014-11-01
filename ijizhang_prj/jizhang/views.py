@@ -208,22 +208,21 @@ def find_item(request):
         del_id = request.POST.getlist('del_id')
         
         if not del_id:
+            for item_id in del_id:
+                del_item = get_object_or_404(Item, id=item_id)
+                del_item.delete()
+            return HttpResponseRedirect("/jizhang")
+                
+        else:    
             form = FindItemForm(data=request.POST)
             if form.is_valid():
-                item_list = Item.objects.filter(pub_date__range=(form.cleaned_data['start_date'],form.cleaned_data['end_date']))
+                item_list = Item.objects.filter(category__user__username=request.user.username).filter(pub_date__range=(form.cleaned_data['start_date'],form.cleaned_data['end_date']))
                 p = Paginator(item_list , PAGE_ITEM_NUM)
                 item_pages = []
                 for i in p.page_range:
                     item_pages.append(p.page(i))
 
-                return render_to_response('jizhang/find_item_result.html', RequestContext(request,{'item_pages': item_pages}))
-                
-        else:   
-            for item_id in del_id:
-                del_item = get_object_or_404(Item, id=item_id)
-                del_item.delete()
-            return HttpResponseRedirect("/jizhang")
-
+                return render_to_response('jizhang/find_item_result.html', RequestContext(request,{'username':request.user.username,'item_pages': item_pages}))
     else:
         tmp_date = timezone.now()-datetime.timedelta(days=60)
         form = FindItemForm(initial={'start_date':tmp_date.date(),'end_date':timezone.now().date()})
@@ -386,7 +385,7 @@ def handle_uploaded_file_item(f):
     for line in reader:
         print line[0]+line[1]+line[2]+line[3]
         if i>0:
-            category = Category.objects.filter(name=gb_decode(line[2]))
+            category = Category.objects.filter(user__username=request.user.username).filter(name=gb_decode(line[2]))
             if not category:
                 pass
             else:
@@ -418,7 +417,7 @@ def handle_uploaded_file_category(f, request):
                 
                 data.save()
             else:
-                pcategory = Category.objects.filter(name=gb_decode(line[0]))
+                pcategory = Category.objects.filter(user__username=request.user.username).filter(name=gb_decode(line[0]))
                 if not pcategory:
                     pass
                 else:
