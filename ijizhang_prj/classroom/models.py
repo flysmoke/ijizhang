@@ -34,7 +34,7 @@ class Room(BaseModel):
         return '%s' % (reverse('classroom:join_room', kwargs={'room_id':self.id,'add_type':add_type}))  
             
 class Draw(BaseModel):
-    name                = models.CharField(max_length=50000)    
+    name                = models.TextField()    
     color           = models.CharField(max_length=40)
     room            = models.ForeignKey(Room, db_column='room', related_name="draws")
     class Meta:
@@ -42,7 +42,7 @@ class Draw(BaseModel):
     def __unicode__(self):
         return self.name 
 class Comment(BaseModel):
-    name                = models.CharField(max_length=2000)    
+    name                = models.CharField(max_length=400)    
     room            = models.ForeignKey(Room, db_column='room', related_name="comments")
     class Meta:
         db_table        = 'class_comment'  
