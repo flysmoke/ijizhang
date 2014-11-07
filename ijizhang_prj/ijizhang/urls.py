@@ -9,8 +9,9 @@ urlpatterns = patterns('',
 	url(r'^admin/', include(admin.site.urls)),
 	url(r'^accounts/',include('accounts.urls',namespace='accounts')),	
 	url(r'^jizhang/',include('jizhang.urls',namespace='jizhang')),
+	url(r'^classroom/',include('classroom.urls',namespace='classroom')),
 	url(r'^$',include('jizhang.urls',namespace='jizhang')),
 )
 
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns  
-urlpatterns += staticfiles_urlpatterns() 
+#from django.contrib.staticfiles.urls import staticfiles_urlpatterns  
+#urlpatterns += staticfiles_urlpatterns() 

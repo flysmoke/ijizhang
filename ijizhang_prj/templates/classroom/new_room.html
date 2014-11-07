@@ -1,0 +1,59 @@
+
+{% extends "base_ijizhang.html" %}
+{%block title%}新建/编辑教室{%endblock%}
+
+{%block extra_header%}
+
+{%endblock%}
+
+
+{% block content %}
+{% include "welcome.html" %}
+
+            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'classroom:index_room' %}"'><span class="glyphicon glyphicon-plus"></span> 教室列表</button>
+            
+<p></p>
+<p></p>
+
+<form method="post" action=""  role="form" >
+{% csrf_token %}
+
+{% if out_errors %}
+<ul class="errorlist"><li>{{out_errors}}</li>
+{% endif %}
+
+
+
+
+
+{% for field in form %}
+
+    {% if field.field.widget.attrs.checkbox %}
+        <div class="checkbox">
+        {{ field.errors }}
+        
+        {{ field }}{{ field.label }} 
+        </div>
+
+    {% else %}
+        <div class="form-group">
+        {{ field.errors }}
+        {{ field.label_tag }} 
+        {{ field }}
+        </div>
+    {% endif %}
+
+{% endfor %}
+
+
+
+
+<p></p>
+<p></p>
+<button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 提交</button>
+</form>
+
+
+
+
+{%endblock%}

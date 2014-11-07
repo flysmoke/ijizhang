@@ -1,0 +1,105 @@
+
+{% extends "base_ijizhang.html" %}
+{%block title%}教室列表{%endblock%}
+{%block extra_header%}
+<script>
+    $(function () {
+        $("#all").click(function () {
+            var checked_status = this.checked;
+            $("input[name=del_id]").each(function () {
+                this.checked = checked_status;
+            });
+        });
+    });
+</script>
+{% endblock%}
+        
+{% block content %}
+{% include "welcome.html" %}
+
+        <div>
+            <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'classroom:new_room' %}"'><span class="glyphicon glyphicon-plus"></span> 新建教室</button>
+
+            <!-- Button trigger modal -->
+
+            <button class="btn btn-danger" data-toggle="modal" data-target="#myModal">
+            <span class="glyphicon glyphicon-trash"></span> 删除所选
+            </button>
+        </div>
+
+        <form method="post" action="">
+        {% csrf_token %}
+
+            <table class="table table-striped">
+
+                <tr class="info"><td>创建时间</a></strong></td>
+                    <td><strong>教室名称</strong></td>
+                    <td><strong>创建者</strong></td>
+                    <td><strong>人数</strong></td>
+                    <td><strong><input type="checkbox" id="all" />全选删除?</strong></td>
+                </tr>
+
+                {% if item_list %}
+                    {% for item in item_list %}
+                    <tr class="{% cycle ,active %}">
+                        <td>{{ item.create_time|date:"Y-m-d"}}</td>
+                        <td data-toggle="tooltip" data-placement="left" title="进入教室"><a href="{{item.get_absolute_url}}">{{ item.name}}</a></td>
+                        <td> {{ item.create_by_user.username}} </td>
+                        <td> {{ item.members.count}} </td>
+                        <td><input type='checkbox' name="del_id" value="{{item.id}}"></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <p>没有可用的教室</p>
+                {% endif %}
+
+
+            </table>
+      
+    <ul class="pagination">
+        {% if item_list.has_previous %}
+           <li><a href="?page={{ item_list.previous_page_number }}">&laquo;</a></li>
+        {% else%}
+           <li class="disable"><a>&laquo;</a></li>
+        {% endif %}
+        
+        {% for i in page_num_list %} 
+            {%if i > 0%}
+            <li {%ifequal item_list.number forloop.counter%}class="active"{%endifequal%}><a href="?page={{ i }}">{{i}}</a></li>
+            {%elif i == 0%}
+            <li><a><strong>...</strong></a></li>
+            {%endif%}
+        {% endfor %}
+        {% if item_list.has_next %}
+           <li><a href="?page={{ item_list.next_page_number }}">&raquo;</a></li>
+        {% else %}
+           <li class="disable"><a>&raquo;</a></li>
+        {% endif %}
+     </ul>
+            <!-- Modal -->
+            <div class="modal fade" backdrop="static" id="myModal" tabindex="-1"  role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>      
+                    <h4 class="modal-title" id="myModalLabel">确认删除?</h4>
+                  </div>
+                  <div class="modal-body">
+                    <h6>删除前请确认，删除操作不可恢复！</h6>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">删除</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+        </form>
+
+        
+
+{%endblock%}
+
+
+

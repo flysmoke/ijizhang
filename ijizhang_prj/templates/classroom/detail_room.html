@@ -1,0 +1,98 @@
+
+{% extends "base_ijizhang.html" %}
+{%block title%}教室--{{room.name}}{%endblock%}
+{%block extra_header%}
+    <link href="/static/libs/cxColor/css/jquery.cxcolor.css" rel="stylesheet">
+    <script src="/static/libs/cxColor/js/jquery.cxcolor.min.js"> </script>
+
+
+{% endblock%}
+        
+{% block content %}
+
+<div class="container">
+    {% include "welcome.html" %}
+
+    <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{% url 'classroom:index_room' %}"'><span class="glyphicon glyphicon-home"></span> 教室列表</button>
+
+    {%if user_have_joined%}
+    <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{{room.get_remove_member_url}}"'><span class="glyphicon glyphicon-minus"></span> 退出教室</button>
+    <p></p>
+    <p></p>    
+    <div class="row show-grid">
+        <div class="col-md-2 col-sm-2">
+            <p>教室成员</p>
+            <div id="member_div">
+            </div>
+        </div>
+        <div class="col-md-8 col-sm-8">
+            <p>教室白板</p>
+            <canvas  style="border: 2px solid #000000"  id="myCanvas" width="700" height="500">浏览器不支持canvas标签</canvas>
+            {%if isCreator%}
+            <p><button class="btn btn-default" onclick="clearDraw('{{room.id}}')"><span class="glyphicon glyphicon-trash"></span>清除白板</button>
+            {%endif%}
+            <label for="color_a">选择颜色：</label><input id="color_a" name="mycolor" type="text" class="input_cxcolor" readonly>
+        </div>
+        <div class="col-md-2 col-sm-2">
+            <p>聊天记录</p>
+            <div id="comment_div">
+
+            </div>
+            <form role="form">
+            {% csrf_token %}
+              <div class="form-group">
+                <textarea id="comment_content" class="form-control" rows="3" placeholder="说点什么吧"></textarea>
+              </div>
+              
+              <button onclick="postComment('{{room.id}}')" class="btn btn-default">发送</button>
+            </form>            
+            
+        </div>
+    </div>
+    {%else%}
+    <button type='button' class="btn btn-primary " onclick='javascrtpt:window.location.href="{{room.get_add_member_url}}"'><span class="glyphicon glyphicon-plus"></span> 加入教室</button>
+
+    {%endif%}
+</div>
+<script src="/static/libs/js/classroom.js"> </script>
+
+<script>
+
+    var ctx;  
+    var mycanvas;
+    var maginx;
+    var maginy;
+    var loginuser;
+    var drawuser;
+    var xy = new Array();  //用来保存鼠标轨迹坐标
+    var room_id;
+    var drawcolor;
+    window.onload=function(){
+        mycanvas = document.getElementById("myCanvas");
+        maginx = $("#myCanvas").offset().left;
+        maginy = $("#myCanvas").offset().top;
+        loginuser = "{{username}}";
+        drawuser = "{{room.draw_by_user.username}}";
+        room_id = '{{room.id}}';
+        drawcolor = $("#color_a").cxColor();
+        
+        ctx = mycanvas.getContext("2d");
+        ctx.lineWidth = 1; //线宽
+        //ctx.lineCap = "round"; //线头样式   
+
+        if(drawuser!=loginuser){
+            gameLoop();
+        }else{
+            getDraw(room_id);
+            mycanvas.onmousedown = startmove;   //监听mycanvas的鼠标按下事件
+            document.documentElement.onmouseup = stopmove;  //监听鼠标移动事件  
+            gameLoop();
+        }
+    }
+     
+        
+</script>
+{%endblock%}
+
+
+
