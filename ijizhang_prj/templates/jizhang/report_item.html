@@ -2,8 +2,14 @@
 {%block title%}生成报表{%endblock%}
 
 {%block extra_header%}
-<script src="/static/libs/js/date-picker.js"> </script>
+
+<script src="/static/libs/tablesorter/js/jquery.tablesorter.min.js"> </script>
+<script>
+$(function(){ $(".table-striped").tablesorter(); });
+</script>
 {%endblock%}
+
+
 
 {% block content %}
 {% include "welcome.html" %}
@@ -41,66 +47,64 @@
 <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-ok"></span> 提交</button>
 </form>
 
-
 {% if table_data_shouru%}
-    {% if table_data_zhichu%}
-        <h3>收入报表</h3>
-    {%else%}
-        <h3>收入支出报表</h3>
-    {%endif%}
-    <table class="table table-striped">
-        <tr class="info">
-            {% if table_data_zhichu%}
-            <td>收入分类</td>
-            {%else%}
-            <td>分类</td>
-            {%endif%}
-            
-            {% for item in report_month %}
-            <td>{{item}}</td>
-            {%endfor%}
-            
-            {% if table_data_zhichu%}
-            <td>收入总和</td>
-            {%else%}
-            <td>分类总和</td>
-            {%endif%}        
-        </tr>
-
-        {% for item in table_data_shouru %}
-        <tr class="{% cycle ,active %}">
-            <td>{{item.name}}</td>
-            {% for price in item.data %}
-            <td>{{price}}</td>
-            {%endfor%}
-        </tr>
+<table class="table table-striped tablesorter">
+    <thead>
+    <tr class="info">
+        {% if table_data_zhichu%}
+        <th>收入分类</th>
+        {%else%}
+        <th>分类</th>
+        {%endif%}
+        
+        {% for item in report_month %}
+        <th>{{item}}</th>
         {%endfor%}
         
-    </table>
-{%endif%}
-
-{% if table_data_zhichu%}
-<h3>支出报表</h3>
-<table class="table table-striped">
-    <tr class="info">
-        <td>支出分类</td>
-        {% for item in report_month %}
-        <td>{{item}}</td>
-        {%endfor%}
-        <td>支出总和</td>
+        {% if table_data_zhichu%}
+        <th>收入总和</th>
+        {%else%}
+        <th>分类总和</th>
+        {%endif%}        
     </tr>
-
-    {% for item in table_data_zhichu %}
-    <tr class="{% cycle ,active %}">
+    </thead>
+    <tbody>
+    {% for item in table_data_shouru %}
+    <tr>
         <td>{{item.name}}</td>
         {% for price in item.data %}
         <td>{{price}}</td>
         {%endfor%}
     </tr>
     {%endfor%}
-    
+    </tbody>
 </table>
 {%endif%}
+
+{% if table_data_zhichu%}
+<table class="table table-striped tablesorter">
+    <thead>
+    <tr class="info">
+        <th>支出分类</th>
+        {% for item in report_month %}
+        <th>{{item}}</th>
+        {%endfor%}
+        <th>支出总和</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in table_data_zhichu %}
+    <tr>
+        <td>{{item.name}}</td>
+        {% for price in item.data %}
+        <td>{{price}}</td>
+        {%endfor%}
+    </tr>
+    {%endfor%}
+    </tbody>
+</table>
+{%endif%}
+
 
 {% include "footer_button.html" %}
 

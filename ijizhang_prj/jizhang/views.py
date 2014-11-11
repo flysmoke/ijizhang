@@ -256,7 +256,6 @@ def table_report_data_format(report_data, isIncome, total=False):
                     sum_category = sum_category+int(data.item__price__sum)
         null_data.append(sum_category)
         table_data.append(null_data)
-    print table_data
     #4. format
     format_data=[]
     exist_categorys.append(u'总和')
@@ -269,7 +268,6 @@ def table_report_data_format(report_data, isIncome, total=False):
         data.append(sum_data)
         format_data.append({'name':category,'data':data})
         j=j+1
-    print format_data
     return format_data
 
 
@@ -383,7 +381,6 @@ def handle_uploaded_file_item(f):
     reader = csv.reader(csv_file)
     i=0
     for line in reader:
-        print line[0]+line[1]+line[2]+line[3]
         if i>0:
             category = Category.objects.filter(user__username=request.user.username).filter(name=gb_decode(line[2]))
             if not category:
@@ -408,7 +405,6 @@ def handle_uploaded_file_category(f, request):
     reader = csv.reader(csv_file)
     i=0
     for line in reader:
-        print line[0]+line[1]+line[2]
         if i>0:
             if line[0]==P_CATEGORY_NULL_NAME:
                 data=Category(name=gb_decode(line[1]), 

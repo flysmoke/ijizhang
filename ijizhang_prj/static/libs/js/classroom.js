@@ -1,7 +1,7 @@
 
     
     function gameLoop() {
-        window.setTimeout(gameLoop, 1000000);
+        window.setTimeout(gameLoop, 20000);
         if(drawuser!=loginuser){
             getDraw(room_id);
         }
