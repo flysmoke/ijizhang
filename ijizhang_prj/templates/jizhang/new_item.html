@@ -1,4 +1,3 @@
-
 {% extends "base_ijizhang.html" %}
 {%block title%}新建/编辑收支{%endblock%}
 
@@ -12,6 +11,17 @@
             $("#id_category").val($(this)[0].value);
         });
    });
+
+  $(function() { 
+  
+    $( "#id_comment" ).autocomplete({
+      source: "/jizhang/autocomplete_comments",
+      minLength: 2,
+      select: function( event, ui ) {
+        $("#id_category").val(ui.item.category_id);
+      }
+    });
+  });   
 </script>
 {%endblock%}
 

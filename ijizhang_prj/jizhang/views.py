@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 import datetime
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-import csv
+import csv, json
 from django.db.models import Sum, Count
 from django.db import connection
 
@@ -458,10 +458,31 @@ def import_category_csv(request):
     context = {'form':form,'username':request.user.username}
     return render_to_response('jizhang/import_category_csv.html', RequestContext(request,context))
     
-    
-    
+@login_required    
+def autocomplete_comments(request):
+    term = request.GET.get('term')
+    if not term:
+        items=Item.objects.filter(category__user__username=request.user.username)[:12]
+    else:
+        items=Item.objects.filter(category__user__username=request.user.username).filter(comment__icontains=term)[:12]
+    json_comments = []
+    for item in items:
+        have_track = 0
+        for json_c in json_comments:
+            if json_c['value'] == item.comment and json_c['category_id'] == item.category.id:
+                have_track=1
+                break
 
+        if have_track==0:
+            json_comments.append({"id": item.id,
+                             "category_id": item.category.id,
+                             "label": item.comment+"--"+item.category.name,
+                             "value": item.comment
+                             })
+    return HttpResponse(json.dumps(json_comments), mimetype="application/json") 
+        
 	
+    
 def first_login_category(userid):
     new_category=Category(name=u'工作收入',isIncome=True,user_id=userid)
     new_category.save()

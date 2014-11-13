@@ -24,4 +24,5 @@ urlpatterns = patterns('',
     url(r'^export_to_category_csv/',views.export_to_category_csv,name='export_to_category_csv'),
     url(r'^import_item_csv/',views.import_item_csv,name='import_item_csv'),
     url(r'^import_category_csv/',views.import_category_csv,name='import_category_csv'),    
+    url(r'^autocomplete_comments/',views.autocomplete_comments),    
 )
