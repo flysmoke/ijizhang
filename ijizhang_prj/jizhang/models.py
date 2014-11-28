@@ -11,7 +11,7 @@ class Category(models.Model):
         (True, _(u'收入')),
         (False, _(u'支出') ),
     )
-    p_category = models.ForeignKey('self', null = True, blank = True, verbose_name=_(u"父类名称"))
+    p_category = models.ForeignKey('self', null = True, blank = True, verbose_name=_(u"父类名称"), related_name='child')
     name = models.CharField(max_length=20, verbose_name=_(u"类别名称"))
     isIncome = models.BooleanField(choices=INCOME_CHOICES, verbose_name='是否收入')
     user = models.ForeignKey(User,verbose_name='所属用户')
