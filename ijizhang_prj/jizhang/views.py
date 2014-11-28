@@ -91,7 +91,14 @@ def index_category_item(request,pk):
     return render_to_response('jizhang/index_item.html', context,context_instance=RequestContext(request))
     
 
-
+def get_category(category_list, new_list, level):
+    for category in category_list:
+        new_list.append({'category':category,'level':'----'*level})
+        level=level+1
+        new_list,level = get_category(category.child.all(),new_list,level)
+        level=level-1
+    return new_list,level
+    
 # category list view
 @login_required
 def index_category(request):
@@ -102,8 +109,10 @@ def index_category(request):
             del_category = get_object_or_404(Category, id=category_id)
             del_category.delete()
 
-    category_list = Category.objects.filter(user__username=request.user.username).order_by('p_category')
-    context = {'category_list': category_list,'username':request.user.username}
+    category_list = Category.objects.filter(user__username=request.user.username).filter(p_category__isnull=True)
+    new_list = []
+    new_list,level=get_category(category_list,new_list,0)
+    context = {'category_list': new_list,'username':request.user.username}
     return render_to_response('jizhang/index_category.html', RequestContext(request,context))	
 
 # first login auto generate category
