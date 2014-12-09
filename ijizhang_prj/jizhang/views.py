@@ -148,7 +148,7 @@ def new_item(request):
             new_item = form.save()
             new_item.save()
             if not retun_list:
-                form=ItemForm(request)
+                form = ItemForm(request,initial={'pub_date':timezone.now().date()})
                 if new_item.category.isIncome:
                     isIncome=u"收入"
                 else:
