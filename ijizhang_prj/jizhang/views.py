@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.template.context import RequestContext
 from django.contrib.auth.decorators import login_required
+from django.core.urlresolvers import reverse
 import datetime
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -136,20 +137,30 @@ def first_login(request):
     return render_to_response('jizhang/index_category.html', RequestContext(request,context))	
 
 # new item view	
-@login_required	
 def new_item(request):
+    last_save_item=""
     if request.method == 'POST':
+        retun_list=request.POST.get('return_list')
+        add_another=request.POST.get('add_another')
         form = ItemForm(request,data=request.POST)
 
         if form.is_valid():
             new_item = form.save()
             new_item.save()
-            return HttpResponseRedirect("/jizhang")
+            if not retun_list:
+                form=ItemForm(request)
+                if new_item.category.isIncome:
+                    isIncome=u"收入"
+                else:
+                    isIncome=u"支出"
+                last_save_item=u'您刚提交的"'+new_item.category.name+u'"分类下"'+str(new_item.price)+u'"元'+isIncome+u"已保存"
+            else:
+                return HttpResponseRedirect(reverse("jizhang:index_item"))
     else:
         form = ItemForm(request,initial={'pub_date':timezone.now().date()})
 
-    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).filter(num_items__gt=0).order_by('-num_items')[:8]
-    context = {'form':form,'username':request.user.username,'most_used_categorys':most_used_categorys}
+    most_used_categorys = Category.objects.filter(user__username=request.user.username).annotate(num_items=Count('item')).order_by('-num_items')[:6]
+    context = {'last_save_item':last_save_item,'form':form,'username':request.user.username,'most_used_categorys':most_used_categorys}
     return render_to_response('jizhang/new_item.html',RequestContext(request,context))
 
 	
