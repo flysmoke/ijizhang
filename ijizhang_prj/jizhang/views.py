@@ -224,9 +224,24 @@ def edit_category(request,pk):
 
 def config_qset(query):
     qset = (
-            Q(category__name__icontains=query) |
             Q(comment__icontains=query)
         )
+    return qset
+
+def config_category_qset(id):
+    qset = ()
+    ff = get_object_or_404(Category, id=id)
+    for child in ff.child.all():
+        if not qset:
+            qset = config_category_qset(child.id)
+        else:
+            qset = qset | config_category_qset(child.id)
+
+    if not qset:
+        qset = (Q(category__id=ff.id))
+    else:
+        qset = qset | (Q(category__id=ff.id))
+
     return qset
 
 @login_required 
@@ -242,28 +257,33 @@ def find_item(request):
                 
         else:    
 
-            form = FindItemForm(data=request.POST)
+            form = FindItemForm(request,data=request.POST)
             if form.is_valid():
                 if not form.cleaned_data['start_date']:
                     item_list = Item.objects.filter(category__user__username=request.user.username).all()
                 else:
                     item_list = Item.objects.filter(category__user__username=request.user.username).filter(pub_date__range=(form.cleaned_data['start_date'],form.cleaned_data['end_date']))
 
+                category_id = form.cleaned_data['category']
+                if not category_id:
+                    item_category = item_list
+                else:
+                    category_qset=config_category_qset(category_id)
+                    item_category = item_list.filter(category_qset).distinct()
+
                 query = form.cleaned_data['query']
                 if not query:   
-                    results = item_list.order_by('-pub_date')
+                    results = item_category.order_by('-pub_date')
                 else:                
                     query_list = query.strip().split(' ')
                     qset =()
-                    tag_qset=()
                     for every_query in query_list:
                         if not qset:
                             qset = config_qset(every_query)
                         else:
                             qset = qset|config_qset(every_query)
 
-                    results = item_list.filter(qset).distinct().order_by('-pub_date')
-
+                    results = item_category.filter(qset).distinct().order_by('-pub_date')
 
 
                 p = Paginator(results , PAGE_ITEM_NUM)
@@ -273,7 +293,7 @@ def find_item(request):
 
                 return render_to_response('jizhang/find_item_result.html', RequestContext(request,{'username':request.user.username,'item_pages': item_pages}))
     else:
-        form = FindItemForm(initial={'start_date':None,'end_date':timezone.now().date()})
+        form = FindItemForm(request,initial={'start_date':None,'end_date':timezone.now().date()})
     context = {'form':form,'username':request.user.username}
     return render_to_response('jizhang/find_item.html',RequestContext(request,context))
 
