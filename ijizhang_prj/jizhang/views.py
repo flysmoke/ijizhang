@@ -11,7 +11,7 @@ import datetime
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import csv, json
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 from django.db import connection
 
 #myApp package
@@ -221,31 +221,59 @@ def edit_category(request,pk):
     context = {'form':form,'username':request.user.username,'out_errors':out_errors}
     return render_to_response('jizhang/new_category.html',RequestContext(request,context))
 
-	
+
+def config_qset(query):
+    qset = (
+            Q(category__name__icontains=query) |
+            Q(comment__icontains=query)
+        )
+    return qset
+
 @login_required 
 def find_item(request):
     if request.method == 'POST':
         del_id = request.POST.getlist('del_id')
         
-        if not del_id:
+        if del_id:
             for item_id in del_id:
                 del_item = get_object_or_404(Item, id=item_id)
                 del_item.delete()
             return HttpResponseRedirect("/jizhang")
                 
         else:    
+
             form = FindItemForm(data=request.POST)
             if form.is_valid():
-                item_list = Item.objects.filter(category__user__username=request.user.username).filter(pub_date__range=(form.cleaned_data['start_date'],form.cleaned_data['end_date']))
-                p = Paginator(item_list , PAGE_ITEM_NUM)
+                if not form.cleaned_data['start_date']:
+                    item_list = Item.objects.filter(category__user__username=request.user.username).all()
+                else:
+                    item_list = Item.objects.filter(category__user__username=request.user.username).filter(pub_date__range=(form.cleaned_data['start_date'],form.cleaned_data['end_date']))
+
+                query = form.cleaned_data['query']
+                if not query:   
+                    results = item_list.order_by('-pub_date')
+                else:                
+                    query_list = query.strip().split(' ')
+                    qset =()
+                    tag_qset=()
+                    for every_query in query_list:
+                        if not qset:
+                            qset = config_qset(every_query)
+                        else:
+                            qset = qset|config_qset(every_query)
+
+                    results = item_list.filter(qset).distinct().order_by('-pub_date')
+
+
+
+                p = Paginator(results , PAGE_ITEM_NUM)
                 item_pages = []
                 for i in p.page_range:
                     item_pages.append(p.page(i))
 
                 return render_to_response('jizhang/find_item_result.html', RequestContext(request,{'username':request.user.username,'item_pages': item_pages}))
     else:
-        tmp_date = timezone.now()-datetime.timedelta(days=60)
-        form = FindItemForm(initial={'start_date':tmp_date.date(),'end_date':timezone.now().date()})
+        form = FindItemForm(initial={'start_date':None,'end_date':timezone.now().date()})
     context = {'form':form,'username':request.user.username}
     return render_to_response('jizhang/find_item.html',RequestContext(request,context))
 
