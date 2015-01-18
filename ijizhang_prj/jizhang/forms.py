@@ -84,7 +84,7 @@ class CategoryForm(ModelForm):
 	def clean_isIncome(self):
 		if self.cleaned_data['p_category']:
 			if not self.cleaned_data['p_category'].isIncome==self.cleaned_data['isIncome']:
-				raise forms.ValidationError("是否收入应和父类别一致.")	
+				raise forms.ValidationError(u"是否收入应和父类别一致.")	
 		return self.cleaned_data['isIncome']
 		
 
@@ -96,17 +96,27 @@ class NewCategoryForm(CategoryForm):
 			repeat_category = Category.objects.get(name=self.cleaned_data['name'])
 		except Category.DoesNotExist:
 			return self.cleaned_data['name']
-		raise forms.ValidationError("该名称类别已有，请使用其他的名称.")	
+		raise forms.ValidationError(u"该名称类别已有，请使用其他的名称.")	
 
 	
 class FindItemForm(forms.Form):	
-	start_date = forms.DateField(label=u'开始时间',widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))
-	end_date = forms.DateField(label=u'结束时间',widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))	
+	start_date = forms.DateField(label=u'开始时间',required=False, widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))
+	end_date = forms.DateField(label=u'结束时间',widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))
+	query = forms.CharField(label=u'关键字',widget=forms.TextInput(attrs={'class':"form-control"}))	
+		
+	def clean_query(self):
+		if not self.cleaned_data['start_date']:
+			if not self.cleaned_data['query']:
+				raise forms.ValidationError(u"开始时间和关键字至少要有一个.")
+		return self.cleaned_data['query']
 	def clean_end_date(self):
-		if self.cleaned_data['end_date'] > self.cleaned_data['start_date']:
+		if not self.cleaned_data['start_date']:
 			return self.cleaned_data['end_date']
 		else:
-			raise forms.ValidationError("结束时间需要晚于开始时间.")		
+			if self.cleaned_data['end_date'] > self.cleaned_data['start_date']:
+				return self.cleaned_data['end_date']
+			else:
+				raise forms.ValidationError(u"结束时间需要晚于开始时间.")			
 
 			
 	
@@ -123,7 +133,7 @@ class ReportForm(forms.Form):
         (1, _(u'收入表和支出表分开统计')),
     ) 
     
-    report_type = forms.ChoiceField(label='报表类型', widget = forms.Select(attrs={'class':"form-control"}), choices=REPORT_TYPES)
+    report_type = forms.ChoiceField(label=u'报表类型', widget = forms.Select(attrs={'class':"form-control"}), choices=REPORT_TYPES)
     start_date = forms.DateField(label=u'开始时间',widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))
-    report_range = forms.ChoiceField(label='报表时间', widget = forms.Select(attrs={'class':"form-control"}), choices=REPORT_RANGES)
+    report_range = forms.ChoiceField(label=u'报表时间', widget = forms.Select(attrs={'class':"form-control"}), choices=REPORT_RANGES)
     
