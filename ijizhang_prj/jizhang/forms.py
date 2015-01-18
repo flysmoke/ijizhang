@@ -102,8 +102,23 @@ class NewCategoryForm(CategoryForm):
 class FindItemForm(forms.Form):	
 	start_date = forms.DateField(label=u'开始时间',required=False, widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))
 	end_date = forms.DateField(label=u'结束时间',widget=forms.DateInput(attrs={'size': 20,'class':"datepicker form-control"}))
-	query = forms.CharField(label=u'关键字',widget=forms.TextInput(attrs={'class':"form-control"}))	
-		
+	category = forms.ChoiceField(label=u'选择分类',required=False)
+	query = forms.CharField(label=u'备注关键字',required=False,widget=forms.TextInput(attrs={'class':"form-control"}))	
+	
+	def __init__(self, request, *args, **kwargs):
+		super(FindItemForm, self).__init__(*args, **kwargs)
+		aa=[]
+		for category in Category.objects.filter(user__username=request.user.username):
+			if not category.p_category:
+				aa.extend([[category.id,  category.name, 0]])
+			else:
+				aa.extend([[category.id,  category.name, category.p_category.id]])
+					
+		category_sort,row_start = sort_category(aa,0,0,0)
+		bb=[(cate[0], cate[1])  for cate in category_sort]
+		self.fields['category'].widget = forms.Select(attrs={'class':"form-control"})
+		self.fields['category'].choices = [('',u'所有分类')] + bb	
+
 	def clean_query(self):
 		if not self.cleaned_data['start_date']:
 			if not self.cleaned_data['query']:
@@ -116,7 +131,7 @@ class FindItemForm(forms.Form):
 			if self.cleaned_data['end_date'] > self.cleaned_data['start_date']:
 				return self.cleaned_data['end_date']
 			else:
-				raise forms.ValidationError(u"结束时间需要晚于开始时间.")			
+				raise forms.ValidationError(u"结束时间需要晚于开始时间.")					
 
 			
 	
